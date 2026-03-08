@@ -1,0 +1,5 @@
+gobotmygod
+*.db
+*.db-wal
+*.db-shm
+.env
