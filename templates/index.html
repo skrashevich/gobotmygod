@@ -621,6 +621,10 @@ body::before {
 [data-theme="light"] .theme-toggle .icon-sun { display: block; }
 [data-theme="light"] .theme-toggle .icon-moon { display: none; }
 
+/* ===== LANG TOGGLE ===== */
+.lang-toggle { position: absolute; top: 16px; right: 50px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: var(--ff-mono); font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; letter-spacing: 1px; transition: var(--transition); z-index: 1; }
+.lang-toggle:hover { border-color: var(--cyan-dim); color: var(--cyan); }
+
 /* ===== LIGHT THEME (applied via data-theme attribute, set by JS from localStorage or system preference) ===== */
 [data-theme="light"] {
   --bg: #f4f6fb; --bg2: #eceef5; --surface: #ffffff; --surface2: #f0f2f8; --surface3: #e2e5ee;
@@ -678,12 +682,14 @@ body::before {
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: var(--border-hl); }
 </style>
 <script>
-// Apply theme immediately to prevent flash
+// Apply theme and language immediately to prevent flash
 (function() {
   var saved = localStorage.getItem('theme');
   if (saved) { document.documentElement.setAttribute('data-theme', saved); }
   else if (window.matchMedia('(prefers-color-scheme: light)').matches) { document.documentElement.setAttribute('data-theme', 'light'); }
   else { document.documentElement.setAttribute('data-theme', 'dark'); }
+  var lang = localStorage.getItem('lang') || 'en';
+  document.documentElement.setAttribute('lang', lang);
 })();
 </script>
 </head>
@@ -693,6 +699,7 @@ body::before {
   <div class="sidebar-header">
     <div class="logo">COMMAND CENTER</div>
     <div class="logo-main">TG Control</div>
+    <button class="lang-toggle" onclick="toggleLang()">EN</button>
     <button class="theme-toggle" onclick="toggleTheme()" title="Switch theme">
       <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -850,7 +857,7 @@ body::before {
     <div id="tab-send" class="tab-content content" style="display:none;">
       <div class="panel send-area">
         <div class="panel-title">Compose Broadcast</div>
-        <div class="hint">Supports HTML: <code>&lt;b&gt;</code> <code>&lt;i&gt;</code> <code>&lt;code&gt;</code> <code>&lt;a href&gt;</code></div>
+        <div class="hint send-hint">Supports HTML: <code>&lt;b&gt;</code> <code>&lt;i&gt;</code> <code>&lt;code&gt;</code> <code>&lt;a href&gt;</code></div>
         <textarea id="sendText" placeholder="Enter message..."></textarea>
         <div style="margin-top:12px; text-align:right;">
           <button class="btn btn-primary" onclick="sendMessage()">TRANSMIT</button>
@@ -990,7 +997,7 @@ body::before {
 
     <label class="route-toggle" onclick="updateRouteToggleStatus()">
       <input type="checkbox" id="routeEnabled" checked onchange="updateRouteToggleStatus()">
-      <span class="route-toggle-label">Route Status</span>
+      <span class="route-toggle-label" id="routeToggleLabel">Route Status</span>
       <span class="route-toggle-status route-toggle-on" id="routeToggleStatus">ACTIVE</span>
     </label>
 
@@ -1050,20 +1057,492 @@ function esc(s) {
   return d.innerHTML;
 }
 
+// ===== i18n =====
+
+const i18n = {
+  en: {
+    command_center: 'COMMAND CENTER', tg_control: 'TG Control',
+    bots: 'BOTS', add: '+ ADD', chats: 'CHATS', no_bots: 'No bots added',
+    switch_theme: 'Switch theme',
+    select_bot: 'Select a Bot', select_bot_hint: 'add a bot or select one from the sidebar',
+    bot_config: 'Bot Configuration', routing_rules: 'Routing Rules', add_route: '+ ADD ROUTE',
+    edit: 'EDIT', delete: 'DELETE', check_webhook: 'CHECK WEBHOOK', checking: 'CHECKING...',
+    refresh: 'REFRESH', remove: 'REMOVE',
+    management: 'MANAGEMENT', proxy: 'PROXY',
+    running: 'RUNNING', stopped: 'STOPPED', error: 'ERROR',
+    enabled: 'ENABLED', disabled: 'Disabled',
+    source_cli: 'CLI (startup token)', source_web: 'Web UI',
+    username: 'Username', source: 'Source', management_label: 'Management', proxy_label: 'Proxy',
+    backend_url: 'Backend URL', forwarded: 'Forwarded', backend_health: 'Backend Health',
+    api_proxy_url: 'API Proxy URL', api_proxy_hint: 'Set as API base URL in backend to capture bot replies',
+    offset: 'Offset', polling_timeout: 'Polling Timeout', last_activity: 'Last Activity', last_error: 'Last Error',
+    // tabs
+    tab_messages: 'Messages', tab_analytics: 'Analytics', tab_admins: 'Admins',
+    tab_audit: 'Audit Log', tab_users: 'Users', tab_tags: 'Tags', tab_info: 'Info', tab_broadcast: 'Broadcast',
+    // messages
+    search_messages: 'search messages...', no_messages: 'NO MESSAGES RECORDED', no_results: 'NO RESULTS',
+    load_older: 'LOAD OLDER', send_placeholder: 'Send a message...', send: 'SEND',
+    pin: 'PIN', del: 'DEL', ban: 'BAN', unban: 'UNBAN', deleted: 'deleted',
+    confirm_delete_msg: 'Delete this message?', confirm_ban: 'Ban this user?', confirm_unban: 'Unban this user?',
+    msg_sent: 'Message sent', pinned: 'Pinned', msg_deleted: 'Deleted',
+    user_banned: 'User banned', user_unbanned: 'User unbanned',
+    // stats
+    total_messages: 'Total Messages', today: 'Today', active_7d: 'Active (7d)',
+    hourly_activity: 'Hourly Activity (7d)', top_contributors: 'Top Contributors',
+    no_data: 'NO DATA', msg_count: 'msg',
+    // admins
+    administrators: 'Administrators', promote_btn: '+ PROMOTE',
+    perm_manage: 'MANAGE', perm_delete: 'DELETE', perm_restrict: 'RESTRICT',
+    perm_invite: 'INVITE', perm_pin: 'PIN', perm_info: 'INFO', perm_promote: 'PROMOTE',
+    owner: 'OWNER', admin: 'ADMIN',
+    perms: 'PERMS', title_btn: 'TITLE', demote: 'DEMOTE',
+    confirm_demote: 'Demote this administrator?',
+    // audit log
+    audit_trail: 'Audit Trail', load_more: 'LOAD MORE', no_entries: 'NO ENTRIES',
+    action_ban: 'BAN USER', action_unban: 'UNBAN USER',
+    action_promote: 'PROMOTE', action_demote: 'DEMOTE',
+    action_set_title: 'SET TITLE', action_pin_msg: 'PIN MSG',
+    action_del_msg: 'DEL MSG', action_add_tag: 'ADD TAG',
+    // users
+    search_users: 'search users...', no_users: 'NO USERS FOUND', tag: 'TAG',
+    last_seen: 'last:',
+    // tags
+    user_classification: 'User Classification',
+    tag_user_id: 'User ID', tag_display_name: 'Display Name', tag_label: 'Tag', tag_color: 'Color',
+    tag_placeholder_id: '000000', tag_placeholder_handle: '@handle', tag_placeholder_name: 'VIP, MOD...',
+    add_tag: '+ TAG', no_tags: 'NO TAGS ASSIGNED',
+    user_id_tag_required: 'User ID and tag required',
+    tag_added: 'Tag added', tag_removed: 'Tag removed',
+    tag_prompt: 'Tag name (e.g. VIP, Spammer, Trusted):',
+    // info
+    channel_data: 'Channel Data', id_label: 'ID', type_label: 'Type', title_label: 'Title',
+    members: 'Members', description: 'Description', admin_label: 'Admin',
+    active: 'ACTIVE', inactive: 'INACTIVE', updated: 'Updated',
+    refreshed: 'Refreshed', removed: 'Removed',
+    confirm_remove_chat: 'Remove chat from list?',
+    // broadcast
+    compose_broadcast: 'Compose Broadcast',
+    html_hint: 'Supports HTML: <b> <i> <code> <a href>',
+    enter_message: 'Enter message...', transmit: 'TRANSMIT', msg_transmitted: 'Message transmitted',
+    // routing
+    no_routing_rules: 'NO ROUTING RULES',
+    route_hint: 'Route messages between bots by text, user or chat',
+    cond_text: 'TEXT', cond_user: 'USER', cond_chat: 'CHAT',
+    action_fwd: 'FWD', action_copy: 'COPY', snat: 'S-NAT',
+    configure_rule: 'configure rule below',
+    confirm_delete_route: 'Delete this routing rule?',
+    route_saved: 'Route saved', route_deleted: 'Route deleted',
+    // route modal
+    add_routing_rule: 'Add Routing Rule', edit_routing_rule: 'Edit Routing Rule',
+    when_condition: 'When \u2014 Condition Type',
+    cond_text_match: 'Text match (regex)', cond_from_user: 'From user (by ID)', cond_from_chat: 'From chat (by ID)',
+    match_value: 'Match Value', match_placeholder: 'regex pattern or numeric ID...',
+    then_action: 'Then \u2014 Action',
+    action_forward_desc: 'Forward \u2014 send text as new message',
+    action_copy_desc: 'Copy \u2014 forward original with attribution',
+    via_target_bot: 'Via \u2014 Target Bot',
+    to_target_chat: 'To \u2014 Target Chat ID', target_chat_hint: '(0 = same chat as source)',
+    note: 'Note', note_placeholder: 'optional description...',
+    route_status: 'Route Status', save_route: 'SAVE ROUTE',
+    condition_required: 'Condition value required', select_target_bot: 'Select target bot',
+    // bot modal
+    add_bot: 'Add Bot', edit_bot: 'Edit Bot',
+    name: 'Name', name_placeholder: 'My Bot',
+    bot_token: 'Bot Token', token_placeholder: '123456:ABC-DEF...',
+    check: 'CHECK',
+    manage_label: 'Management (track chats, messages, users)',
+    proxy_label_full: 'Reverse Proxy (forward updates to webhook)',
+    backend_url_label: 'Backend URL (webhook target)', backend_url_placeholder: 'https://your-server.com/webhook',
+    secret_token_label: 'Secret Token (X-Telegram-Bot-Api-Secret-Token header)', optional: 'optional',
+    polling_timeout_label: 'Polling Timeout (seconds)',
+    cancel: 'CANCEL', save: 'SAVE',
+    name_token_required: 'Name and token required',
+    backend_url_required: 'Backend URL required for proxy mode',
+    bot_added: 'Bot added', bot_updated: 'Bot updated', bot_deleted: 'Bot deleted',
+    confirm_delete_bot: 'Delete this bot and all its data?',
+    // admin modals
+    promote_admin: 'Promote Administrator', edit_permissions: 'Edit Permissions',
+    enter_user_id: 'Enter user ID',
+    perm_manage_chat: 'Manage Chat', perm_delete_messages: 'Delete Messages',
+    perm_restrict_members: 'Restrict Members', perm_invite_users: 'Invite Users',
+    perm_pin_messages: 'Pin Messages', perm_change_info: 'Change Info',
+    perm_promote_members: 'Promote Members',
+    confirm_btn: 'CONFIRM',
+    permissions_updated: 'Permissions updated', demoted: 'Demoted',
+    set_admin_title: 'Set Admin Title', custom_title: 'Custom Title',
+    title_placeholder: 'Moderator, Helper...', title_updated: 'Title updated',
+    // media
+    media_photo: 'Photo', media_video: 'Video', media_animation: 'GIF', media_sticker: 'Sticker',
+    media_voice: 'Voice', media_audio: 'Audio', media_document: 'File', media_video_note: 'Video message',
+    media_generic: 'media', media_empty: '[empty]',
+    // channel/group
+    channel: 'CHANNEL', group: 'GROUP',
+    request_failed: 'Request failed',
+  },
+  ru: {
+    command_center: '\u0426\u0415\u041d\u0422\u0420 \u0423\u041f\u0420\u0410\u0412\u041b\u0415\u041d\u0418\u042f', tg_control: 'TG \u041a\u043e\u043d\u0442\u0440\u043e\u043b\u044c',
+    bots: '\u0411\u041e\u0422\u042b', add: '+ \u0414\u041e\u0411\u0410\u0412\u0418\u0422\u042c', chats: '\u0427\u0410\u0422\u042b', no_bots: '\u041d\u0435\u0442 \u0431\u043e\u0442\u043e\u0432',
+    switch_theme: '\u0421\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u0435\u043c\u0443',
+    select_bot: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0431\u043e\u0442\u0430', select_bot_hint: '\u0434\u043e\u0431\u0430\u0432\u044c\u0442\u0435 \u0431\u043e\u0442\u0430 \u0438\u043b\u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0438\u0437 \u0441\u043f\u0438\u0441\u043a\u0430',
+    bot_config: '\u041a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044f \u0431\u043e\u0442\u0430', routing_rules: '\u041f\u0440\u0430\u0432\u0438\u043b\u0430 \u043c\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u0438', add_route: '+ \u041c\u0410\u0420\u0428\u0420\u0423\u0422',
+    edit: '\u0420\u0415\u0414.', delete: '\u0423\u0414\u0410\u041b\u0418\u0422\u042c', check_webhook: '\u041f\u0420\u041e\u0412\u0415\u0420\u041a\u0410', checking: '\u041f\u0420\u041e\u0412\u0415\u0420\u042f\u0415\u041c...',
+    refresh: '\u041e\u0411\u041d\u041e\u0412\u0418\u0422\u042c', remove: '\u0423\u0411\u0420\u0410\u0422\u042c',
+    management: '\u0423\u041f\u0420\u0410\u0412\u041b\u0415\u041d\u0418\u0415', proxy: '\u041f\u0420\u041e\u041a\u0421\u0418',
+    running: '\u0420\u0410\u0411\u041e\u0422\u0410\u0415\u0422', stopped: '\u041e\u0421\u0422\u0410\u041d\u041e\u0412\u041b\u0415\u041d', error: '\u041e\u0428\u0418\u0411\u041a\u0410',
+    enabled: '\u0412\u041a\u041b\u042e\u0427\u0415\u041d\u041e', disabled: '\u041e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u043e',
+    source_cli: 'CLI (\u0442\u043e\u043a\u0435\u043d \u043f\u0440\u0438 \u0437\u0430\u043f\u0443\u0441\u043a\u0435)', source_web: '\u0412\u0435\u0431-\u0438\u043d\u0442\u0435\u0440\u0444\u0435\u0439\u0441',
+    username: '\u0418\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f', source: '\u0418\u0441\u0442\u043e\u0447\u043d\u0438\u043a', management_label: '\u0423\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435', proxy_label: '\u041f\u0440\u043e\u043a\u0441\u0438',
+    backend_url: 'Backend URL', forwarded: '\u041f\u0435\u0440\u0435\u043d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043e', backend_health: '\u0421\u0442\u0430\u0442\u0443\u0441 \u0431\u044d\u043a\u0435\u043d\u0434\u0430',
+    api_proxy_url: 'API Proxy URL', api_proxy_hint: '\u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u043a\u0430\u043a base URL \u0432 \u0431\u044d\u043a\u0435\u043d\u0434\u0435 \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442\u0430 \u043e\u0442\u0432\u0435\u0442\u043e\u0432 \u0431\u043e\u0442\u0430',
+    offset: '\u0421\u043c\u0435\u0449\u0435\u043d\u0438\u0435', polling_timeout: '\u0422\u0430\u0439\u043c\u0430\u0443\u0442 \u043e\u043f\u0440\u043e\u0441\u0430', last_activity: '\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u044f\u044f \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0441\u0442\u044c', last_error: '\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u044f\u044f \u043e\u0448\u0438\u0431\u043a\u0430',
+    // tabs
+    tab_messages: '\u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f', tab_analytics: '\u0410\u043d\u0430\u043b\u0438\u0442\u0438\u043a\u0430', tab_admins: '\u0410\u0434\u043c\u0438\u043d\u044b',
+    tab_audit: '\u0416\u0443\u0440\u043d\u0430\u043b', tab_users: '\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0438', tab_tags: '\u0422\u0435\u0433\u0438', tab_info: '\u0418\u043d\u0444\u043e', tab_broadcast: '\u0420\u0430\u0441\u0441\u044b\u043b\u043a\u0430',
+    // messages
+    search_messages: '\u043f\u043e\u0438\u0441\u043a \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439...', no_messages: '\u041d\u0415\u0422 \u0421\u041e\u041e\u0411\u0429\u0415\u041d\u0418\u0419', no_results: '\u041d\u0418\u0427\u0415\u0413\u041e \u041d\u0415 \u041d\u0410\u0419\u0414\u0415\u041d\u041e',
+    load_older: '\u0417\u0410\u0413\u0420\u0423\u0417\u0418\u0422\u042c \u0420\u0410\u041d\u041d\u0418\u0415', send_placeholder: '\u041d\u0430\u043f\u0438\u0448\u0438\u0442\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435...', send: '\u041e\u0422\u041f\u0420\u0410\u0412\u0418\u0422\u042c',
+    pin: '\u0417\u0410\u041a\u0420.', del: '\u0423\u0414\u0410\u041b.', ban: '\u0411\u0410\u041d', unban: '\u0420\u0410\u0417\u0411\u0410\u041d', deleted: '\u0443\u0434\u0430\u043b\u0435\u043d\u043e',
+    confirm_delete_msg: '\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u044d\u0442\u043e \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435?', confirm_ban: '\u0417\u0430\u0431\u0430\u043d\u0438\u0442\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f?', confirm_unban: '\u0420\u0430\u0437\u0431\u0430\u043d\u0438\u0442\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f?',
+    msg_sent: '\u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043e', pinned: '\u0417\u0430\u043a\u0440\u0435\u043f\u043b\u0435\u043d\u043e', msg_deleted: '\u0423\u0434\u0430\u043b\u0435\u043d\u043e',
+    user_banned: '\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u0437\u0430\u0431\u0430\u043d\u0435\u043d', user_unbanned: '\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u0440\u0430\u0437\u0431\u0430\u043d\u0435\u043d',
+    // stats
+    total_messages: '\u0412\u0441\u0435\u0433\u043e \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439', today: '\u0421\u0435\u0433\u043e\u0434\u043d\u044f', active_7d: '\u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0445 (7\u0434)',
+    hourly_activity: '\u0410\u043a\u0442\u0438\u0432\u043d\u043e\u0441\u0442\u044c \u043f\u043e \u0447\u0430\u0441\u0430\u043c (7\u0434)', top_contributors: '\u0422\u043e\u043f \u0430\u0432\u0442\u043e\u0440\u043e\u0432',
+    no_data: '\u041d\u0415\u0422 \u0414\u0410\u041d\u041d\u042b\u0425', msg_count: '\u0441\u043e\u043e\u0431\u0449.',
+    // admins
+    administrators: '\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u044b', promote_btn: '+ \u041d\u0410\u0417\u041d\u0410\u0427\u0418\u0422\u042c',
+    perm_manage: '\u0423\u041f\u0420.', perm_delete: '\u0423\u0414\u0410\u041b.', perm_restrict: '\u041e\u0413\u0420..',
+    perm_invite: '\u041f\u0420\u0418\u0413\u041b.', perm_pin: '\u0417\u0410\u041a\u0420.', perm_info: '\u0418\u041d\u0424\u041e', perm_promote: '\u041d\u0410\u0417\u041d.',
+    owner: '\u0412\u041b\u0410\u0414\u0415\u041b\u0415\u0426', admin: '\u0410\u0414\u041c\u0418\u041d',
+    perms: '\u041f\u0420\u0410\u0412\u0410', title_btn: '\u0422\u0418\u0422\u0423\u041b', demote: '\u0421\u041d\u042f\u0422\u042c',
+    confirm_demote: '\u0421\u043d\u044f\u0442\u044c \u044d\u0442\u043e\u0433\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430?',
+    // audit log
+    audit_trail: '\u0416\u0443\u0440\u043d\u0430\u043b \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439', load_more: '\u0415\u0429\u0401', no_entries: '\u041d\u0415\u0422 \u0417\u0410\u041f\u0418\u0421\u0415\u0419',
+    action_ban: '\u0411\u0410\u041d', action_unban: '\u0420\u0410\u0417\u0411\u0410\u041d',
+    action_promote: '\u041d\u0410\u0417\u041d\u0410\u0427\u0415\u041d\u0418\u0415', action_demote: '\u0421\u041d\u042f\u0422\u0418\u0415',
+    action_set_title: '\u0422\u0418\u0422\u0423\u041b', action_pin_msg: '\u0417\u0410\u041a\u0420\u0415\u041f',
+    action_del_msg: '\u0423\u0414\u0410\u041b\u0415\u041d\u0418\u0415', action_add_tag: '\u0422\u0415\u0413',
+    // users
+    search_users: '\u043f\u043e\u0438\u0441\u043a \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439...', no_users: '\u041d\u0415\u0422 \u041f\u041e\u041b\u042c\u0417\u041e\u0412\u0410\u0422\u0415\u041b\u0415\u0419', tag: '\u0422\u0415\u0413',
+    last_seen: '\u043f\u043e\u0441\u043b.:',
+    // tags
+    user_classification: '\u041a\u043b\u0430\u0441\u0441\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439',
+    tag_user_id: 'ID \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f', tag_display_name: '\u0418\u043c\u044f', tag_label: '\u0422\u0435\u0433', tag_color: '\u0426\u0432\u0435\u0442',
+    tag_placeholder_id: '000000', tag_placeholder_handle: '@\u043d\u0438\u043a', tag_placeholder_name: 'VIP, MOD...',
+    add_tag: '+ \u0422\u0415\u0413', no_tags: '\u041d\u0415\u0422 \u0422\u0415\u0413\u041e\u0412',
+    user_id_tag_required: '\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f ID \u0438 \u0442\u0435\u0433',
+    tag_added: '\u0422\u0435\u0433 \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d', tag_removed: '\u0422\u0435\u0433 \u0443\u0434\u0430\u043b\u0451\u043d',
+    tag_prompt: '\u0418\u043c\u044f \u0442\u0435\u0433\u0430 (\u043d\u043f\u0440. VIP, \u0421\u043f\u0430\u043c\u0435\u0440, \u0414\u043e\u0432\u0435\u0440\u0435\u043d\u043d\u044b\u0439):',
+    // info
+    channel_data: '\u0414\u0430\u043d\u043d\u044b\u0435 \u043a\u0430\u043d\u0430\u043b\u0430', id_label: 'ID', type_label: '\u0422\u0438\u043f', title_label: '\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435',
+    members: '\u0423\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u0438', description: '\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435', admin_label: '\u0410\u0434\u043c\u0438\u043d',
+    active: '\u0410\u041a\u0422\u0418\u0412\u0415\u041d', inactive: '\u041d\u0415\u0410\u041a\u0422\u0418\u0412\u0415\u041d', updated: '\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u043e',
+    refreshed: '\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u043e', removed: '\u0423\u0434\u0430\u043b\u0435\u043d\u043e',
+    confirm_remove_chat: '\u0423\u0431\u0440\u0430\u0442\u044c \u0447\u0430\u0442 \u0438\u0437 \u0441\u043f\u0438\u0441\u043a\u0430?',
+    // broadcast
+    compose_broadcast: '\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u0440\u0430\u0441\u0441\u044b\u043b\u043a\u0443',
+    html_hint: '\u041f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044f HTML: <b> <i> <code> <a href>',
+    enter_message: '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435...', transmit: '\u041e\u0422\u041f\u0420\u0410\u0412\u0418\u0422\u042c', msg_transmitted: '\u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043e',
+    // routing
+    no_routing_rules: '\u041d\u0415\u0422 \u041f\u0420\u0410\u0412\u0418\u041b',
+    route_hint: '\u041c\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u044f \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439 \u043c\u0435\u0436\u0434\u0443 \u0431\u043e\u0442\u0430\u043c\u0438',
+    cond_text: '\u0422\u0415\u041a\u0421\u0422', cond_user: '\u041f\u041e\u041b\u042c\u0417.', cond_chat: '\u0427\u0410\u0422',
+    action_fwd: '\u041f\u0415\u0420.', action_copy: '\u041a\u041e\u041f.', snat: 'S-NAT',
+    configure_rule: '\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u0442\u0435 \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u043d\u0438\u0436\u0435',
+    confirm_delete_route: '\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u043c\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u0438?',
+    route_saved: '\u041c\u0430\u0440\u0448\u0440\u0443\u0442 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d', route_deleted: '\u041c\u0430\u0440\u0448\u0440\u0443\u0442 \u0443\u0434\u0430\u043b\u0451\u043d',
+    // route modal
+    add_routing_rule: '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043f\u0440\u0430\u0432\u0438\u043b\u043e', edit_routing_rule: '\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043f\u0440\u0430\u0432\u0438\u043b\u043e',
+    when_condition: '\u041a\u043e\u0433\u0434\u0430 \u2014 \u0422\u0438\u043f \u0443\u0441\u043b\u043e\u0432\u0438\u044f',
+    cond_text_match: '\u0421\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0435 \u0442\u0435\u043a\u0441\u0442\u0430 (regex)', cond_from_user: '\u041e\u0442 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f (ID)', cond_from_chat: '\u0418\u0437 \u0447\u0430\u0442\u0430 (ID)',
+    match_value: '\u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435', match_placeholder: 'regex \u0438\u043b\u0438 ID...',
+    then_action: '\u0422\u043e\u0433\u0434\u0430 \u2014 \u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0435',
+    action_forward_desc: '\u041f\u0435\u0440\u0435\u0441\u043b\u0430\u0442\u044c \u2014 \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u043a\u0430\u043a \u043d\u043e\u0432\u043e\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435',
+    action_copy_desc: '\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u2014 \u043f\u0435\u0440\u0435\u0441\u043b\u0430\u0442\u044c \u0441 \u0443\u043a\u0430\u0437\u0430\u043d\u0438\u0435\u043c \u0430\u0432\u0442\u043e\u0440\u0430',
+    via_target_bot: '\u0427\u0435\u0440\u0435\u0437 \u2014 \u0411\u043e\u0442-\u043f\u043e\u043b\u0443\u0447\u0430\u0442\u0435\u043b\u044c',
+    to_target_chat: '\u041a\u0443\u0434\u0430 \u2014 ID \u0447\u0430\u0442\u0430', target_chat_hint: '(0 = \u0442\u043e\u0442 \u0436\u0435 \u0447\u0430\u0442)',
+    note: '\u0417\u0430\u043c\u0435\u0442\u043a\u0430', note_placeholder: '\u043e\u043f\u0438\u0441\u0430\u043d\u0438\u0435...',
+    route_status: '\u0421\u0442\u0430\u0442\u0443\u0441 \u043c\u0430\u0440\u0448\u0440\u0443\u0442\u0430', save_route: '\u0421\u041e\u0425\u0420\u0410\u041d\u0418\u0422\u042c',
+    condition_required: '\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 \u0443\u0441\u043b\u043e\u0432\u0438\u044f', select_target_bot: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0431\u043e\u0442\u0430',
+    // bot modal
+    add_bot: '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0431\u043e\u0442\u0430', edit_bot: '\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0431\u043e\u0442\u0430',
+    name: '\u0418\u043c\u044f', name_placeholder: '\u041c\u043e\u0439 \u0431\u043e\u0442',
+    bot_token: '\u0422\u043e\u043a\u0435\u043d \u0431\u043e\u0442\u0430', token_placeholder: '123456:ABC-DEF...',
+    check: '\u041f\u0420\u041e\u0412\u0415\u0420\u0418\u0422\u042c',
+    manage_label: '\u0423\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 (\u0447\u0430\u0442\u044b, \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f, \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0438)',
+    proxy_label_full: '\u041e\u0431\u0440\u0430\u0442\u043d\u044b\u0439 \u043f\u0440\u043e\u043a\u0441\u0438 (\u043f\u0435\u0440\u0435\u0441\u044b\u043b\u043a\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0439 \u043d\u0430 webhook)',
+    backend_url_label: 'Backend URL (\u0446\u0435\u043b\u044c webhook)', backend_url_placeholder: 'https://your-server.com/webhook',
+    secret_token_label: 'Secret Token (\u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a X-Telegram-Bot-Api-Secret-Token)', optional: '\u043d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e',
+    polling_timeout_label: '\u0422\u0430\u0439\u043c\u0430\u0443\u0442 \u043e\u043f\u0440\u043e\u0441\u0430 (\u0441\u0435\u043a.)',
+    cancel: '\u041e\u0422\u041c\u0415\u041d\u0410', save: '\u0421\u041e\u0425\u0420\u0410\u041d\u0418\u0422\u042c',
+    name_token_required: '\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u0438\u043c\u044f \u0438 \u0442\u043e\u043a\u0435\u043d',
+    backend_url_required: 'Backend URL \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u0435\u043d \u0434\u043b\u044f \u0440\u0435\u0436\u0438\u043c\u0430 \u043f\u0440\u043e\u043a\u0441\u0438',
+    bot_added: '\u0411\u043e\u0442 \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d', bot_updated: '\u0411\u043e\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0451\u043d', bot_deleted: '\u0411\u043e\u0442 \u0443\u0434\u0430\u043b\u0451\u043d',
+    confirm_delete_bot: '\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0431\u043e\u0442\u0430 \u0438 \u0432\u0441\u0435 \u0435\u0433\u043e \u0434\u0430\u043d\u043d\u044b\u0435?',
+    // admin modals
+    promote_admin: '\u041d\u0430\u0437\u043d\u0430\u0447\u0438\u0442\u044c \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430', edit_permissions: '\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043f\u0440\u0430\u0432\u0430',
+    enter_user_id: '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 ID \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f',
+    perm_manage_chat: '\u0423\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u0447\u0430\u0442\u043e\u043c', perm_delete_messages: '\u0423\u0434\u0430\u043b\u0435\u043d\u0438\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439',
+    perm_restrict_members: '\u041e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u0435 \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432', perm_invite_users: '\u041f\u0440\u0438\u0433\u043b\u0430\u0448\u0435\u043d\u0438\u0435 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439',
+    perm_pin_messages: '\u0417\u0430\u043a\u0440\u0435\u043f\u043b\u0435\u043d\u0438\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439', perm_change_info: '\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u0438\u043d\u0444\u043e',
+    perm_promote_members: '\u041d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 \u0430\u0434\u043c\u0438\u043d\u043e\u0432',
+    confirm_btn: '\u041f\u041e\u0414\u0422\u0412\u0415\u0420\u0414\u0418\u0422\u042c',
+    permissions_updated: '\u041f\u0440\u0430\u0432\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u044b', demoted: '\u0421\u043d\u044f\u0442',
+    set_admin_title: '\u0423\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u0442\u0438\u0442\u0443\u043b', custom_title: '\u0422\u0438\u0442\u0443\u043b',
+    title_placeholder: '\u041c\u043e\u0434\u0435\u0440\u0430\u0442\u043e\u0440, \u041f\u043e\u043c\u043e\u0449\u043d\u0438\u043a...', title_updated: '\u0422\u0438\u0442\u0443\u043b \u043e\u0431\u043d\u043e\u0432\u043b\u0451\u043d',
+    // media
+    media_photo: '\u0424\u043e\u0442\u043e', media_video: '\u0412\u0438\u0434\u0435\u043e', media_animation: 'GIF', media_sticker: '\u0421\u0442\u0438\u043a\u0435\u0440',
+    media_voice: '\u0413\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0435', media_audio: '\u0410\u0443\u0434\u0438\u043e', media_document: '\u0424\u0430\u0439\u043b', media_video_note: '\u0412\u0438\u0434\u0435\u043e\u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435',
+    media_generic: '\u043c\u0435\u0434\u0438\u0430', media_empty: '[\u043f\u0443\u0441\u0442\u043e]',
+    // channel/group
+    channel: '\u041a\u0410\u041d\u0410\u041b', group: '\u0413\u0420\u0423\u041f\u041f\u0410',
+    request_failed: '\u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u043f\u0440\u043e\u0441\u0430',
+  }
+};
+
+let currentLang = localStorage.getItem('lang') || 'en';
+
+function t(key) {
+  return (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key;
+}
+
+function getMediaLabels() {
+  return {
+    photo: t('media_photo'), video: t('media_video'), animation: t('media_animation'), sticker: t('media_sticker'),
+    voice: t('media_voice'), audio: t('media_audio'), document: t('media_document'), video_note: t('media_video_note')
+  };
+}
+
+function getActionLabels() {
+  return {
+    ban_user: [t('action_ban'), 'log-action-ban'], unban_user: [t('action_unban'), 'log-action-unban'],
+    promote_admin: [t('action_promote'), 'log-action-promote'], demote_admin: [t('action_demote'), 'log-action-demote'],
+    set_admin_title: [t('action_set_title'), 'log-action-default'], pin_message: [t('action_pin_msg'), 'log-action-default'],
+    delete_message: [t('action_del_msg'), 'log-action-ban'], add_tag: [t('action_add_tag'), 'log-action-promote'],
+  };
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'ru' : 'en';
+  localStorage.setItem('lang', currentLang);
+  document.documentElement.setAttribute('lang', currentLang);
+  applyLang();
+}
+
+function applyLang() {
+  // lang toggle button
+  document.querySelector('.lang-toggle').textContent = currentLang.toUpperCase();
+  // sidebar
+  document.querySelector('.logo').textContent = t('command_center');
+  document.querySelector('.logo-main').textContent = t('tg_control');
+  document.querySelector('.theme-toggle').title = t('switch_theme');
+  document.querySelector('.section-label .btn').textContent = t('add');
+  document.querySelector('.section-label').childNodes[0].textContent = t('bots') + '\n    ';
+  const chatsLabel = document.getElementById('chatsLabel');
+  if (chatsLabel) chatsLabel.textContent = t('chats');
+  // empty state
+  document.querySelector('#emptyState h3').textContent = t('select_bot');
+  document.querySelector('#emptyState p').textContent = t('select_bot_hint');
+  // bot detail
+  document.querySelector('#botDetailView .panel-title').textContent = t('bot_config');
+  document.querySelector('.route-header .panel-title').textContent = t('routing_rules');
+  document.querySelector('.route-header .btn').textContent = t('add_route');
+  // chat view buttons
+  const chatActions = document.querySelector('#chatView .chat-header-actions');
+  if (chatActions) {
+    const btns = chatActions.querySelectorAll('.btn');
+    if (btns[0]) btns[0].textContent = t('refresh');
+    if (btns[1]) btns[1].textContent = t('remove');
+  }
+  // tabs
+  document.querySelectorAll('.tab').forEach(tab => {
+    const tabKeys = {messages:'tab_messages',stats:'tab_analytics',admins:'tab_admins',adminlog:'tab_audit',users:'tab_users',tags:'tab_tags',info:'tab_info',send:'tab_broadcast'};
+    const key = tabKeys[tab.dataset.tab];
+    if (key) tab.textContent = t(key);
+  });
+  // search inputs
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.placeholder = t('search_messages');
+  const usersSearch = document.getElementById('usersSearchInput');
+  if (usersSearch) usersSearch.placeholder = t('search_users');
+  // compose
+  const composeInput = document.getElementById('msgComposeInput');
+  if (composeInput) composeInput.placeholder = t('send_placeholder');
+  const composeBtn = document.querySelector('.msg-compose .btn');
+  if (composeBtn) composeBtn.textContent = t('send');
+  // load more buttons
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  if (loadMoreBtn) loadMoreBtn.textContent = t('load_older');
+  // chat type badge
+  if (currentChat) {
+    const typeEl = document.getElementById('chatType');
+    if (typeEl) typeEl.textContent = currentChat.type === 'channel' ? t('channel') : t('group');
+  }
+  // re-render dynamic content
+  renderBotList();
+  if (currentBot && !currentChat) showBotDetail();
+  if (currentChat) {
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab) switchTab(activeTab.dataset.tab);
+  }
+  // update modals static text
+  updateModalLabels();
+}
+
+function updateModalLabels() {
+  // bot modal field labels
+  const botFieldLabels = document.querySelectorAll('#botModal .modal-field > label');
+  if (botFieldLabels.length >= 1) botFieldLabels[0].textContent = t('name');
+  if (botFieldLabels.length >= 2) botFieldLabels[1].textContent = t('bot_token');
+  // bot modal checkbox labels
+  const botPermLabels = document.querySelectorAll('#botModal .modal-perm');
+  if (botPermLabels.length >= 2) {
+    const cb0 = botPermLabels[0].querySelector('input');
+    if (cb0) { botPermLabels[0].textContent = ''; botPermLabels[0].prepend(cb0); botPermLabels[0].append(' ' + t('manage_label')); }
+    const cb1 = botPermLabels[1].querySelector('input');
+    if (cb1) { botPermLabels[1].textContent = ''; botPermLabels[1].prepend(cb1); botPermLabels[1].append(' ' + t('proxy_label_full')); }
+  }
+  // proxy fields
+  const proxyLabels = document.querySelectorAll('#proxyFields .modal-field > label');
+  if (proxyLabels.length >= 1) proxyLabels[0].textContent = t('backend_url_label');
+  if (proxyLabels.length >= 2) proxyLabels[1].textContent = t('secret_token_label');
+  // polling timeout (outside proxyFields)
+  const botFields = document.querySelectorAll('#botModal > .modal > .modal-field > label');
+  if (botFields.length >= 3) botFields[2].textContent = t('polling_timeout_label');
+  // bot modal check button
+  const checkBtn = document.querySelector('#botModal .modal-field .btn');
+  if (checkBtn && checkBtn.onclick?.toString().includes('validateBotToken')) checkBtn.textContent = t('check');
+  // bot modal action buttons
+  const botBtns = document.querySelectorAll('#botModal .modal-actions .btn');
+  if (botBtns.length >= 2) {
+    botBtns[0].textContent = t('cancel');
+    botBtns[1].textContent = t('save');
+  }
+  // promote modal
+  const pmFieldLabel = document.querySelector('#promoteModal .modal-field > label');
+  if (pmFieldLabel) pmFieldLabel.textContent = t('tag_user_id');
+  const pmPerms = document.querySelectorAll('#promoteModal .modal-perm');
+  const permKeys = ['perm_manage_chat','perm_delete_messages','perm_restrict_members','perm_invite_users','perm_pin_messages','perm_change_info','perm_promote_members'];
+  pmPerms.forEach((lbl, i) => {
+    if (permKeys[i]) {
+      const cb = lbl.querySelector('input');
+      if (cb) { lbl.textContent = ''; lbl.prepend(cb); lbl.append(' ' + t(permKeys[i])); }
+    }
+  });
+  const pmBtns = document.querySelectorAll('#promoteModal .modal-actions .btn');
+  if (pmBtns.length >= 2) {
+    pmBtns[0].textContent = t('cancel');
+    pmBtns[1].textContent = t('confirm_btn');
+  }
+  // title modal
+  const tmLabel = document.querySelector('#titleModal .modal-field > label');
+  if (tmLabel) tmLabel.textContent = t('custom_title');
+  const tmTitle = document.querySelector('#titleModal h3');
+  if (tmTitle) tmTitle.textContent = t('set_admin_title');
+  const tmBtns = document.querySelectorAll('#titleModal .modal-actions .btn');
+  if (tmBtns.length >= 2) {
+    tmBtns[0].textContent = t('cancel');
+    tmBtns[1].textContent = t('save');
+  }
+  // route modal labels
+  const rmLabels = document.querySelectorAll('#routeModal .modal-field > label');
+  if (rmLabels.length >= 6) {
+    rmLabels[0].textContent = t('when_condition');
+    rmLabels[1].textContent = t('match_value');
+    rmLabels[2].textContent = t('then_action');
+    rmLabels[3].textContent = t('via_target_bot');
+    rmLabels[4].innerHTML = `${t('to_target_chat')} <span style="color:var(--text3);text-transform:none;letter-spacing:0">${t('target_chat_hint')}</span>`;
+    rmLabels[5].textContent = t('note');
+  }
+  // route modal select options
+  const condTypeSelect = document.getElementById('routeCondType');
+  if (condTypeSelect && condTypeSelect.options.length >= 3) {
+    condTypeSelect.options[0].textContent = t('cond_text_match');
+    condTypeSelect.options[1].textContent = t('cond_from_user');
+    condTypeSelect.options[2].textContent = t('cond_from_chat');
+  }
+  const actionSelect = document.getElementById('routeAction');
+  if (actionSelect && actionSelect.options.length >= 2) {
+    actionSelect.options[0].textContent = t('action_forward_desc');
+    actionSelect.options[1].textContent = t('action_copy_desc');
+  }
+  // route modal toggle label
+  const routeToggleLabel = document.querySelector('#routeModal .route-toggle-label');
+  if (routeToggleLabel) routeToggleLabel.textContent = t('route_status');
+  // route modal action buttons
+  const rmBtns = document.querySelectorAll('#routeModal .modal-actions .btn');
+  if (rmBtns.length >= 2) {
+    rmBtns[0].textContent = t('cancel');
+    rmBtns[1].textContent = t('save_route');
+  }
+  // tags panel labels
+  updateTagsPanelLabels();
+  // broadcast panel
+  updateBroadcastLabels();
+  // stats panel titles
+  const statsPanelTitles = document.querySelectorAll('#tab-stats .panel-title');
+  if (statsPanelTitles.length >= 2) {
+    statsPanelTitles[0].textContent = t('hourly_activity');
+    statsPanelTitles[1].textContent = t('top_contributors');
+  }
+  // admins panel
+  const adminsPanelTitle = document.querySelector('#tab-admins .panel-title');
+  if (adminsPanelTitle) adminsPanelTitle.textContent = t('administrators');
+  const promoteBtn = document.querySelector('#tab-admins .btn-primary');
+  if (promoteBtn) promoteBtn.textContent = t('promote_btn');
+  // admin log panel
+  const adminlogTitle = document.querySelector('#tab-adminlog .panel-title');
+  if (adminlogTitle) adminlogTitle.textContent = t('audit_trail');
+  // load more buttons
+  const loadMoreLogBtn = document.getElementById('loadMoreLogBtn');
+  if (loadMoreLogBtn) loadMoreLogBtn.textContent = t('load_more');
+  const loadMoreUsersBtn = document.getElementById('loadMoreUsersBtn');
+  if (loadMoreUsersBtn) loadMoreUsersBtn.textContent = t('load_more');
+  // info panel
+  const infoPanelTitle = document.querySelector('#tab-info .panel-title');
+  if (infoPanelTitle) infoPanelTitle.textContent = t('channel_data');
+}
+
+function updateTagsPanelLabels() {
+  const tagsPanel = document.getElementById('tab-tags');
+  if (!tagsPanel) return;
+  const panelTitle = tagsPanel.querySelector('.panel-title');
+  if (panelTitle) panelTitle.textContent = t('user_classification');
+  const tagLabels = tagsPanel.querySelectorAll('.tag-form label');
+  if (tagLabels.length >= 4) {
+    tagLabels[0].textContent = t('tag_user_id');
+    tagLabels[1].textContent = t('tag_display_name');
+    tagLabels[2].textContent = t('tag_label');
+    tagLabels[3].textContent = t('tag_color');
+  }
+  const tagBtn = tagsPanel.querySelector('.tag-form .btn');
+  if (tagBtn) tagBtn.textContent = t('add_tag');
+}
+
+function updateBroadcastLabels() {
+  const sendPanel = document.getElementById('tab-send');
+  if (!sendPanel) return;
+  const panelTitle = sendPanel.querySelector('.panel-title');
+  if (panelTitle) panelTitle.textContent = t('compose_broadcast');
+  const hint = sendPanel.querySelector('.send-hint');
+  if (hint) hint.textContent = t('html_hint');
+  const textarea = sendPanel.querySelector('textarea');
+  if (textarea) textarea.placeholder = t('enter_message');
+  const btn = sendPanel.querySelector('.btn-primary');
+  if (btn) btn.textContent = t('transmit');
+}
+
 const mediaIcons = {
   photo: '🖼', video: '🎬', animation: '🎞', sticker: '😀',
   voice: '🎤', audio: '🎵', document: '📎', video_note: '⏺'
-};
-const mediaLabels = {
-  photo: 'Фото', video: 'Видео', animation: 'GIF', sticker: 'Стикер',
-  voice: 'Голосовое', audio: 'Аудио', document: 'Файл', video_note: 'Видеосообщение'
 };
 
 function renderMsgContent(m) {
   let html = '';
   if (m.media_type && m.file_id) {
     const icon = mediaIcons[m.media_type] || '📎';
-    const label = mediaLabels[m.media_type] || m.media_type;
+    const ml = getMediaLabels();
+    const label = ml[m.media_type] || m.media_type;
     const botParam = currentBot ? `&bot_id=${currentBot.id}` : '';
     const mediaUrl = `/api/media?file_id=${encodeURIComponent(m.file_id)}${botParam}`;
     if (m.media_type === 'photo' || m.media_type === 'sticker') {
@@ -1087,7 +1566,7 @@ function renderMsgContent(m) {
     html += esc(m.text);
   }
   if (!html) {
-    html = `<span style="color:var(--text3);font-style:italic">${m.media_type ? (mediaIcons[m.media_type]||'📎') + ' ' + (mediaLabels[m.media_type]||'медиа') : '[пусто]'}</span>`;
+    html = `<span style="color:var(--text3);font-style:italic">${m.media_type ? (mediaIcons[m.media_type]||'📎') + ' ' + (getMediaLabels()[m.media_type]||t('media_generic')) : t('media_empty')}</span>`;
   }
   return html;
 }
@@ -1101,6 +1580,7 @@ function highlight(text, query) {
 // ===== INIT =====
 
 async function init() {
+  applyLang();
   await loadBots();
   setInterval(loadBots, 15000);
   setInterval(() => {
@@ -1147,7 +1627,7 @@ function renderBotList() {
         </div>
       </div>
     `;
-  }).join('') || '<div style="padding:14px;text-align:center;color:var(--text3);font-family:var(--ff-mono);font-size:11px">No bots added</div>';
+  }).join('') || `<div style="padding:14px;text-align:center;color:var(--text3);font-family:var(--ff-mono);font-size:11px">${t('no_bots')}</div>`;
 }
 
 async function selectBot(botID) {
@@ -1181,43 +1661,43 @@ function showBotDetail() {
   document.getElementById('botDetailName').textContent = b.name || '@' + b.bot_username;
 
   const badges = [];
-  if (b.manage_enabled) badges.push('<span class="badge badge-admin">MANAGEMENT</span>');
-  if (b.proxy_enabled) badges.push('<span class="badge badge-proxy">PROXY</span>');
+  if (b.manage_enabled) badges.push(`<span class="badge badge-admin">${t('management')}</span>`);
+  if (b.proxy_enabled) badges.push(`<span class="badge badge-proxy">${t('proxy')}</span>`);
   const statusClass = b.last_error ? 'status-error' : (b.running ? 'status-running' : 'status-stopped');
-  const statusText = b.last_error ? 'ERROR' : (b.running ? 'RUNNING' : 'STOPPED');
+  const statusText = b.last_error ? t('error') : (b.running ? t('running') : t('stopped'));
   badges.push(`<span class="badge badge-group"><span class="status-dot ${statusClass}" style="margin-right:4px;vertical-align:middle"></span>${statusText}</span>`);
   document.getElementById('botDetailBadges').innerHTML = badges.join(' ');
 
   const actions = [];
-  actions.push(`<button class="btn btn-sm btn-primary" onclick="editCurrentBot()">EDIT</button>`);
+  actions.push(`<button class="btn btn-sm btn-primary" onclick="editCurrentBot()">${t('edit')}</button>`);
   if (b.proxy_enabled && b.backend_url) {
-    actions.push(`<button class="btn btn-sm" onclick="checkBackendHealth()" id="btnCheckHealth">CHECK WEBHOOK</button>`);
+    actions.push(`<button class="btn btn-sm" onclick="checkBackendHealth()" id="btnCheckHealth">${t('check_webhook')}</button>`);
   }
-  actions.push(`<button class="btn btn-danger btn-sm" onclick="deleteCurrentBot()">DELETE</button>`);
+  actions.push(`<button class="btn btn-danger btn-sm" onclick="deleteCurrentBot()">${t('delete')}</button>`);
   document.getElementById('botDetailActions').innerHTML = actions.join('');
 
   const rows = [
-    ['Username', b.bot_username ? '@' + b.bot_username : '\u2014'],
-    ['Source', b.source === 'cli' ? 'CLI (startup token)' : 'Web UI'],
-    ['Management', b.manage_enabled ? '<span style="color:var(--green)">ENABLED</span>' : 'Disabled'],
-    ['Proxy', b.proxy_enabled ? '<span style="color:var(--green)">ENABLED</span>' : 'Disabled'],
+    [t('username'), b.bot_username ? '@' + b.bot_username : '\u2014'],
+    [t('source'), b.source === 'cli' ? t('source_cli') : t('source_web')],
+    [t('management_label'), b.manage_enabled ? `<span style="color:var(--green)">${t('enabled')}</span>` : t('disabled')],
+    [t('proxy_label'), b.proxy_enabled ? `<span style="color:var(--green)">${t('enabled')}</span>` : t('disabled')],
   ];
   if (b.proxy_enabled) {
-    rows.push(['Backend URL', `<span style="font-family:var(--ff-mono);font-size:11px;word-break:break-all">${esc(b.backend_url)}</span>`]);
-    rows.push(['Forwarded', b.updates_forwarded.toLocaleString()]);
+    rows.push([t('backend_url'), `<span style="font-family:var(--ff-mono);font-size:11px;word-break:break-all">${esc(b.backend_url)}</span>`]);
+    rows.push([t('forwarded'), b.updates_forwarded.toLocaleString()]);
     if (b.backend_status) {
       const isOk = b.backend_status.startsWith('ok:');
       const healthColor = isOk ? 'var(--green)' : 'var(--magenta)';
       const checkedAt = b.backend_checked_at ? b.backend_checked_at.replace('T',' ').substring(0,19) : '';
-      rows.push(['Backend Health', `<span style="color:${healthColor};font-family:var(--ff-mono);font-size:11px">${esc(b.backend_status)}</span>${checkedAt ? `<span style="color:var(--text3);font-size:10px;margin-left:8px">${checkedAt}</span>` : ''}`]);
+      rows.push([t('backend_health'), `<span style="color:${healthColor};font-family:var(--ff-mono);font-size:11px">${esc(b.backend_status)}</span>${checkedAt ? `<span style="color:var(--text3);font-size:10px;margin-left:8px">${checkedAt}</span>` : ''}`]);
     }
     const apiProxyURL = `${location.origin}/tgapi/`;
-    rows.push(['API Proxy URL', `<span style="font-family:var(--ff-mono);font-size:11px;word-break:break-all;cursor:pointer;border-bottom:1px dashed var(--cyan-dim)" onclick="navigator.clipboard.writeText('${apiProxyURL}');this.style.color='var(--green)';setTimeout(()=>this.style.color='',1000)" title="Click to copy">${esc(apiProxyURL)}</span><br><span style="color:var(--text3);font-size:10px">Set as API base URL in backend to capture bot replies</span>`]);
+    rows.push([t('api_proxy_url'), `<span style="font-family:var(--ff-mono);font-size:11px;word-break:break-all;cursor:pointer;border-bottom:1px dashed var(--cyan-dim)" onclick="navigator.clipboard.writeText('${apiProxyURL}');this.style.color='var(--green)';setTimeout(()=>this.style.color='',1000)" title="Click to copy">${esc(apiProxyURL)}</span><br><span style="color:var(--text3);font-size:10px">${t('api_proxy_hint')}</span>`]);
   }
-  rows.push(['Offset', b.offset]);
-  rows.push(['Polling Timeout', b.polling_timeout + 's']);
-  if (b.last_activity) rows.push(['Last Activity', b.last_activity.replace('T',' ').substring(0,19)]);
-  if (b.last_error) rows.push(['Last Error', `<span style="color:var(--magenta)">${esc(b.last_error)}</span>`]);
+  rows.push([t('offset'), b.offset]);
+  rows.push([t('polling_timeout'), b.polling_timeout + 's']);
+  if (b.last_activity) rows.push([t('last_activity'), b.last_activity.replace('T',' ').substring(0,19)]);
+  if (b.last_error) rows.push([t('last_error'), `<span style="color:var(--magenta)">${esc(b.last_error)}</span>`]);
 
   document.getElementById('botDetailGrid').innerHTML = rows.map(([k,v]) =>
     `<div class="info-label">${k}</div><div>${v}</div>`
@@ -1240,19 +1720,19 @@ function renderRoutes(routes) {
   const el = document.getElementById('routesList');
   if (!routes || routes.length === 0) {
     el.innerHTML = `<div class="route-empty">
-      <div>NO ROUTING RULES</div>
-      <div class="route-empty-hint">Route messages between bots by text, user or chat</div>
+      <div>${t('no_routing_rules')}</div>
+      <div class="route-empty-hint">${t('route_hint')}</div>
     </div>`;
     return;
   }
   el.innerHTML = routes.map((r, i) => {
     const targetBot = allBots.find(b => b.id === r.target_bot_id);
     const targetName = targetBot ? (targetBot.name || '@' + targetBot.bot_username) : `Bot #${r.target_bot_id}`;
-    const condLabels = {text: 'TEXT', user_id: 'USER', chat_id: 'CHAT'};
+    const condLabels = {text: t('cond_text'), user_id: t('cond_user'), chat_id: t('cond_chat')};
     const condLabel = condLabels[r.condition_type] || r.condition_type;
     const isCopy = r.action === 'copy';
     const actionBadgeClass = isCopy ? 'route-action-copy' : 'route-action-fwd';
-    const actionLabel = isCopy ? 'COPY' : 'FWD';
+    const actionLabel = isCopy ? t('action_copy') : t('action_fwd');
     return `
       <div class="route-item ${r.enabled ? '' : 'route-disabled'}" style="animation-delay:${i * 40}ms">
         <div class="route-indicator ${r.enabled ? 'route-indicator-active' : 'route-indicator-inactive'}"></div>
@@ -1271,8 +1751,8 @@ function renderRoutes(routes) {
           ${r.description ? `<div class="route-meta"><span class="route-desc">${esc(r.description)}</span></div>` : ''}
         </div>
         <div class="route-actions">
-          <button class="btn btn-sm" onclick="editRoute(${r.id})" title="Edit">EDIT</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteRoute(${r.id})" title="Delete">DEL</button>
+          <button class="btn btn-sm" onclick="editRoute(${r.id})">${t('edit')}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRoute(${r.id})">${t('del')}</button>
         </div>
       </div>`;
   }).join('');
@@ -1288,13 +1768,13 @@ function updateRoutePreview() {
   const targetName = targetSel.selectedOptions[0]?.textContent || '?';
   const sourceName = currentBot ? (currentBot.name || '@' + currentBot.bot_username) : 'Source';
 
-  const condLabels = {text: 'TEXT', user_id: 'USER', chat_id: 'CHAT'};
+  const condLabels = {text: t('cond_text'), user_id: t('cond_user'), chat_id: t('cond_chat')};
   const condLabel = condLabels[condType] || condType;
   const isCopy = action === 'copy';
 
   const preview = document.getElementById('routeFlowPreview');
   if (!condValue) {
-    preview.innerHTML = '<span style="color:var(--text3)">configure rule below</span>';
+    preview.innerHTML = `<span style="color:var(--text3)">${t('configure_rule')}</span>`;
     return;
   }
   preview.innerHTML = `
@@ -1304,7 +1784,7 @@ function updateRoutePreview() {
       <span class="route-cond-value">${esc(condValue.length > 20 ? condValue.substring(0,20) + '...' : condValue)}</span>
     </span>
     <span class="route-arrow"></span>
-    <span class="route-action-badge ${isCopy ? 'route-action-copy' : 'route-action-fwd'}">${isCopy ? 'COPY' : 'FWD'}</span>
+    <span class="route-action-badge ${isCopy ? 'route-action-copy' : 'route-action-fwd'}">${isCopy ? t('action_copy') : t('action_fwd')}</span>
     <span style="color:var(--green)">${esc(targetName)}</span>
   `;
 }
@@ -1313,7 +1793,7 @@ function updateRouteToggleStatus() {
   setTimeout(() => {
     const on = document.getElementById('routeEnabled').checked;
     const el = document.getElementById('routeToggleStatus');
-    el.textContent = on ? 'ACTIVE' : 'DISABLED';
+    el.textContent = on ? t('active') : t('disabled');
     el.className = 'route-toggle-status ' + (on ? 'route-toggle-on' : 'route-toggle-off');
   }, 0);
 }
@@ -1327,7 +1807,7 @@ function showRouteModal(route) {
 
   const titleEl = document.getElementById('routeModalTitle');
   if (!route) {
-    titleEl.innerHTML = '<span style="color:var(--amber);font-size:14px">&#9656;&#9656;</span> Add Routing Rule';
+    titleEl.innerHTML = `<span style="color:var(--amber);font-size:14px">&#9656;&#9656;</span> ${t('add_routing_rule')}`;
     document.getElementById('routeEditID').value = '';
     document.getElementById('routeCondType').value = 'text';
     document.getElementById('routeCondValue').value = '';
@@ -1336,7 +1816,7 @@ function showRouteModal(route) {
     document.getElementById('routeDescription').value = '';
     document.getElementById('routeEnabled').checked = true;
   } else {
-    titleEl.innerHTML = '<span style="color:var(--cyan);font-size:14px">&#9656;&#9656;</span> Edit Routing Rule';
+    titleEl.innerHTML = `<span style="color:var(--cyan);font-size:14px">&#9656;&#9656;</span> ${t('edit_routing_rule')}`;
     document.getElementById('routeEditID').value = route.id;
     document.getElementById('routeCondType').value = route.condition_type;
     document.getElementById('routeCondValue').value = route.condition_value;
@@ -1373,8 +1853,8 @@ async function saveRoute() {
     enabled: document.getElementById('routeEnabled').checked,
     description: document.getElementById('routeDescription').value,
   };
-  if (!data.condition_value) { toast('Condition value required', 'error'); return; }
-  if (!data.target_bot_id) { toast('Select target bot', 'error'); return; }
+  if (!data.condition_value) { toast(t('condition_required'), 'error'); return; }
+  if (!data.target_bot_id) { toast(t('select_target_bot'), 'error'); return; }
   try {
     if (editID) {
       data.id = parseInt(editID);
@@ -1383,16 +1863,16 @@ async function saveRoute() {
       await api('/api/routes/add', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
     }
     closeRouteModal();
-    toast('Route saved');
+    toast(t('route_saved'));
     loadRoutes();
   } catch(e) { toast(e.message, 'error'); }
 }
 
 async function deleteRoute(id) {
-  if (!confirm('Delete this routing rule?')) return;
+  if (!confirm(t('confirm_delete_route'))) return;
   try {
     await api(`/api/routes/delete?id=${id}`, { method: 'POST' });
-    toast('Route deleted');
+    toast(t('route_deleted'));
     loadRoutes();
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -1435,7 +1915,7 @@ async function selectChat(chatID) {
 
   document.getElementById('chatTitle').textContent = currentChat.title;
   const typeEl = document.getElementById('chatType');
-  typeEl.textContent = currentChat.type === 'channel' ? 'CHANNEL' : 'GROUP';
+  typeEl.textContent = currentChat.type === 'channel' ? t('channel') : t('group');
   typeEl.className = `badge ${currentChat.type === 'channel' ? 'badge-channel' : 'badge-group'}`;
 
   document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
@@ -1472,19 +1952,19 @@ async function loadMessages(append = false) {
       <div class="msg-row ${m.deleted ? 'msg-deleted' : ''}">
         <span class="msg-user" title="ID: ${m.from_id}">${esc(m.from_user)}</span>
         <span class="msg-text">${renderMsgContent(m)}</span>
-        ${m.deleted ? '<span class="msg-deleted-badge">deleted</span>' : ''}
+        ${m.deleted ? `<span class="msg-deleted-badge">${t('deleted')}</span>` : ''}
         <span class="msg-time">${m.date_str}</span>
         <div class="msg-actions">
           ${currentChat.is_admin && !m.deleted ? `
-            <button class="btn btn-sm" onclick="pinMsg(${m.id})" title="Pin">PIN</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteMsg(${m.id})" title="Delete">DEL</button>
-            ${m.from_id ? `<button class="btn btn-danger btn-sm" onclick="banUsr(${m.from_id})" title="Ban">BAN</button>` : ''}
+            <button class="btn btn-sm" onclick="pinMsg(${m.id})">${t('pin')}</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteMsg(${m.id})">${t('del')}</button>
+            ${m.from_id ? `<button class="btn btn-danger btn-sm" onclick="banUsr(${m.from_id})">${t('ban')}</button>` : ''}
           ` : ''}
         </div>
       </div>
     `).join('');
     if (append) list.innerHTML = html + list.innerHTML;
-    else list.innerHTML = html || '<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">NO MESSAGES RECORDED</div>';
+    else list.innerHTML = html || `<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">${t('no_messages')}</div>`;
     document.getElementById('loadMoreBtn').style.display = msgs.length >= 50 ? 'inline-flex' : 'none';
     if (!append) {
       const content = document.getElementById('messagesContent');
@@ -1506,10 +1986,10 @@ async function doSearch() {
       <div class="msg-row ${m.deleted ? 'msg-deleted' : ''}">
         <span class="msg-user">${esc(m.from_user)}</span>
         <span class="msg-text">${m.media_type ? renderMsgContent(m) : highlight(esc(m.text), esc(q))}</span>
-        ${m.deleted ? '<span class="msg-deleted-badge">deleted</span>' : ''}
+        ${m.deleted ? `<span class="msg-deleted-badge">${t('deleted')}</span>` : ''}
         <span class="msg-time">${m.date_str}</span>
       </div>
-    `).join('') || '<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">NO RESULTS</div>';
+    `).join('') || `<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">${t('no_results')}</div>`;
     document.getElementById('loadMoreBtn').style.display = 'none';
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -1526,7 +2006,7 @@ async function composeSend() {
       body: JSON.stringify({ bot_id: currentBotID, chat_id: currentChat.id, text })
     });
     input.value = '';
-    toast('Message sent');
+    toast(t('msg_sent'));
     setTimeout(() => loadMessages(), 500);
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -1540,7 +2020,7 @@ async function sendMessage() {
       body: JSON.stringify({ bot_id: currentBotID, chat_id: currentChat.id, text })
     });
     document.getElementById('sendText').value = '';
-    toast('Message transmitted');
+    toast(t('msg_transmitted'));
     setTimeout(() => loadMessages(), 500);
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -1548,49 +2028,49 @@ async function sendMessage() {
 async function pinMsg(msgID) {
   try {
     await api(`/api/messages/pin?bot_id=${currentBotID}&chat_id=${currentChat.id}&message_id=${msgID}`, { method: 'POST' });
-    toast('Pinned');
+    toast(t('pinned'));
   } catch(e) { toast(e.message, 'error'); }
 }
 
 async function deleteMsg(msgID) {
-  if (!confirm('Delete this message?')) return;
+  if (!confirm(t('confirm_delete_msg'))) return;
   try {
     await api(`/api/messages/delete?bot_id=${currentBotID}&chat_id=${currentChat.id}&message_id=${msgID}`, { method: 'POST' });
-    toast('Deleted'); loadMessages();
+    toast(t('msg_deleted')); loadMessages();
   } catch(e) { toast(e.message, 'error'); }
 }
 
 async function banUsr(userID) {
-  if (!confirm('Ban this user?')) return;
+  if (!confirm(t('confirm_ban'))) return;
   try {
     await api(`/api/users/ban?bot_id=${currentBotID}&chat_id=${currentChat.id}&user_id=${userID}`, { method: 'POST' });
-    toast('User banned');
+    toast(t('user_banned'));
   } catch(e) { toast(e.message, 'error'); }
 }
 
 async function unbanUsr(userID) {
-  if (!confirm('Unban this user?')) return;
+  if (!confirm(t('confirm_unban'))) return;
   try {
     await api(`/api/users/unban?bot_id=${currentBotID}&chat_id=${currentChat.id}&user_id=${userID}`, { method: 'POST' });
-    toast('User unbanned');
+    toast(t('user_unbanned'));
   } catch(e) { toast(e.message, 'error'); }
 }
 
 async function refreshChat() {
   try {
     const c = await api(`/api/chats/refresh?bot_id=${currentBotID}&chat_id=${currentChat.id}`);
-    currentChat = c; renderInfo(); toast('Refreshed'); loadChats();
+    currentChat = c; renderInfo(); toast(t('refreshed')); loadChats();
   } catch(e) { toast(e.message, 'error'); }
 }
 
 async function removeChat() {
-  if (!confirm('Remove chat from list?')) return;
+  if (!confirm(t('confirm_remove_chat'))) return;
   try {
     await api(`/api/chats/delete?bot_id=${currentBotID}&chat_id=${currentChat.id}`, { method: 'POST' });
     currentChat = null;
     document.getElementById('chatView').style.display = 'none';
     showBotDetail();
-    loadChats(); toast('Removed');
+    loadChats(); toast(t('removed'));
   } catch(e) { toast(e.message, 'error'); }
 }
 
@@ -1601,9 +2081,9 @@ async function loadStats() {
   try {
     const s = await api(`/api/stats?chat_id=${currentChat.id}`);
     document.getElementById('statsCards').innerHTML = `
-      <div class="stat-card"><div class="stat-value">${s.total_messages.toLocaleString()}</div><div class="stat-label">Total Messages</div></div>
-      <div class="stat-card"><div class="stat-value">${s.today_messages.toLocaleString()}</div><div class="stat-label">Today</div></div>
-      <div class="stat-card"><div class="stat-value">${s.active_users}</div><div class="stat-label">Active (7d)</div></div>
+      <div class="stat-card"><div class="stat-value">${s.total_messages.toLocaleString()}</div><div class="stat-label">${t('total_messages')}</div></div>
+      <div class="stat-card"><div class="stat-value">${s.today_messages.toLocaleString()}</div><div class="stat-label">${t('today')}</div></div>
+      <div class="stat-card"><div class="stat-value">${s.active_users}</div><div class="stat-label">${t('active_7d')}</div></div>
     `;
     const maxH = Math.max(...s.hourly_stats.map(h => h.count), 1);
     document.getElementById('hourlyChart').innerHTML = s.hourly_stats.map(h => `
@@ -1613,10 +2093,10 @@ async function loadStats() {
       <li class="top-user">
         <span class="top-user-rank">${String(i + 1).padStart(2, '0')}</span>
         <span class="top-user-name">${esc(u.username)}</span>
-        <span class="top-user-count">${u.count.toLocaleString()} msg</span>
-        ${currentChat.is_admin ? `<button class="btn btn-danger btn-sm" onclick="banUsr(${u.user_id})">BAN</button>` : ''}
+        <span class="top-user-count">${u.count.toLocaleString()} ${t('msg_count')}</span>
+        ${currentChat.is_admin ? `<button class="btn btn-danger btn-sm" onclick="banUsr(${u.user_id})">${t('ban')}</button>` : ''}
       </li>
-    `).join('') || '<li style="padding:20px;color:var(--text3);text-align:center;font-family:var(--ff-mono);font-size:12px">NO DATA</li>';
+    `).join('') || `<li style="padding:20px;color:var(--text3);text-align:center;font-family:var(--ff-mono);font-size:12px">${t('no_data')}</li>`;
   } catch(e) { toast(e.message, 'error'); }
 }
 
@@ -1624,14 +2104,14 @@ function renderInfo() {
   if (!currentChat) return;
   const c = currentChat;
   document.getElementById('infoGrid').innerHTML = `
-    <div class="info-label">ID</div><div style="font-family:var(--ff-mono);font-size:12px">${c.id}</div>
-    <div class="info-label">Type</div><div>${c.type}</div>
-    <div class="info-label">Title</div><div>${esc(c.title)}</div>
-    <div class="info-label">Username</div><div style="font-family:var(--ff-mono);font-size:12px">${c.username ? '@' + c.username : '\u2014'}</div>
-    <div class="info-label">Members</div><div style="font-family:var(--ff-mono)">${c.member_count}</div>
-    <div class="info-label">Description</div><div>${esc(c.description) || '\u2014'}</div>
-    <div class="info-label">Admin</div><div style="color:${c.is_admin ? 'var(--green)' : 'var(--magenta)'}">${c.is_admin ? 'ACTIVE' : 'INACTIVE'}</div>
-    <div class="info-label">Updated</div><div style="font-family:var(--ff-mono);font-size:11px">${c.updated_at}</div>
+    <div class="info-label">${t('id_label')}</div><div style="font-family:var(--ff-mono);font-size:12px">${c.id}</div>
+    <div class="info-label">${t('type_label')}</div><div>${c.type}</div>
+    <div class="info-label">${t('title_label')}</div><div>${esc(c.title)}</div>
+    <div class="info-label">${t('username')}</div><div style="font-family:var(--ff-mono);font-size:12px">${c.username ? '@' + c.username : '\u2014'}</div>
+    <div class="info-label">${t('members')}</div><div style="font-family:var(--ff-mono)">${c.member_count}</div>
+    <div class="info-label">${t('description')}</div><div>${esc(c.description) || '\u2014'}</div>
+    <div class="info-label">${t('admin_label')}</div><div style="color:${c.is_admin ? 'var(--green)' : 'var(--magenta)'}">${c.is_admin ? t('active') : t('inactive')}</div>
+    <div class="info-label">${t('updated')}</div><div style="font-family:var(--ff-mono);font-size:11px">${c.updated_at}</div>
   `;
 }
 
@@ -1648,10 +2128,10 @@ async function loadAdmins() {
     document.getElementById('adminsList').innerHTML = admins.map(a => {
       const isCreator = a.status === 'creator';
       const permLabels = [
-        ['can_manage_chat', 'MANAGE'], ['can_delete_messages', 'DELETE'],
-        ['can_restrict_members', 'RESTRICT'], ['can_invite_users', 'INVITE'],
-        ['can_pin_messages', 'PIN'], ['can_change_info', 'INFO'],
-        ['can_promote_members', 'PROMOTE'],
+        ['can_manage_chat', t('perm_manage')], ['can_delete_messages', t('perm_delete')],
+        ['can_restrict_members', t('perm_restrict')], ['can_invite_users', t('perm_invite')],
+        ['can_pin_messages', t('perm_pin')], ['can_change_info', t('perm_info')],
+        ['can_promote_members', t('perm_promote')],
       ];
       return `
         <div class="admin-card">
@@ -1661,21 +2141,21 @@ async function loadAdmins() {
               <span style="font-family:var(--ff-mono);color:var(--text3);font-size:11px;margin-left:8px">${a.user_id}</span>
               ${a.custom_title ? `<span style="color:var(--amber);font-family:var(--ff-mono);font-size:11px;margin-left:8px">${esc(a.custom_title)}</span>` : ''}
             </div>
-            <span class="admin-role ${isCreator ? 'admin-role-creator' : 'admin-role-admin'}">${isCreator ? 'OWNER' : 'ADMIN'}</span>
+            <span class="admin-role ${isCreator ? 'admin-role-creator' : 'admin-role-admin'}">${isCreator ? t('owner') : t('admin')}</span>
           </div>
           <div class="admin-perms">
             ${permLabels.map(([key, label]) => `<span class="perm-badge ${a[key] ? 'active' : ''}">${label}</span>`).join('')}
           </div>
           ${!isCreator && botCanPromote ? `
             <div class="admin-actions">
-              <button class="btn btn-sm" onclick="showEditPermsModal(${a.user_id})">PERMS</button>
-              <button class="btn btn-sm" onclick="showTitleModal(${a.user_id}, '${esc(a.custom_title || '')}')">TITLE</button>
-              <button class="btn btn-danger btn-sm" onclick="demoteAdmin(${a.user_id})">DEMOTE</button>
+              <button class="btn btn-sm" onclick="showEditPermsModal(${a.user_id})">${t('perms')}</button>
+              <button class="btn btn-sm" onclick="showTitleModal(${a.user_id}, '${esc(a.custom_title || '')}')">${t('title_btn')}</button>
+              <button class="btn btn-danger btn-sm" onclick="demoteAdmin(${a.user_id})">${t('demote')}</button>
             </div>
           ` : ''}
         </div>
       `;
-    }).join('') || '<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">NO DATA</div>';
+    }).join('') || `<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">${t('no_data')}</div>`;
 
     const promoteBtn = document.querySelector('#tab-admins .btn-primary');
     if (promoteBtn) promoteBtn.style.display = botCanPromote ? 'inline-flex' : 'none';
@@ -1694,7 +2174,7 @@ function setPermCheckboxes(perms) {
 
 function showPromoteModal() {
   document.getElementById('promoteUserID').value = '';
-  document.getElementById('promoteModalTitle').textContent = 'Promote Administrator';
+  document.getElementById('promoteModalTitle').textContent = t('promote_admin');
   setPermCheckboxes({});
   document.getElementById('promoteModal').style.display = 'flex';
 }
@@ -1702,7 +2182,7 @@ function showPromoteModal() {
 function showEditPermsModal(userID) {
   const admin = cachedAdmins.find(a => a.user_id === userID);
   document.getElementById('promoteUserID').value = userID;
-  document.getElementById('promoteModalTitle').textContent = 'Edit Permissions';
+  document.getElementById('promoteModalTitle').textContent = t('edit_permissions');
   setPermCheckboxes(admin || {});
   document.getElementById('promoteModal').style.display = 'flex';
 }
@@ -1726,15 +2206,15 @@ async function promoteAdmin() {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ bot_id: currentBotID, chat_id: currentChat.id, user_id: userID, perms })
     });
-    closePromoteModal(); toast('Permissions updated'); loadAdmins();
+    closePromoteModal(); toast(t('permissions_updated')); loadAdmins();
   } catch(e) { toast(e.message, 'error'); }
 }
 
 async function demoteAdmin(userID) {
-  if (!confirm('Demote this administrator?')) return;
+  if (!confirm(t('confirm_demote'))) return;
   try {
     await api(`/api/admins/demote?bot_id=${currentBotID}&chat_id=${currentChat.id}&user_id=${userID}`, { method: 'POST' });
-    toast('Demoted'); loadAdmins();
+    toast(t('demoted')); loadAdmins();
   } catch(e) { toast(e.message, 'error'); }
 }
 
@@ -1755,18 +2235,13 @@ async function setAdminTitle() {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ bot_id: currentBotID, chat_id: currentChat.id, user_id: userID, title })
     });
-    closeTitleModal(); toast('Title updated'); loadAdmins();
+    closeTitleModal(); toast(t('title_updated')); loadAdmins();
   } catch(e) { toast(e.message, 'error'); }
 }
 
 // ===== ADMIN LOG =====
 
-const actionLabels = {
-  ban_user: ['BAN USER', 'log-action-ban'], unban_user: ['UNBAN USER', 'log-action-unban'],
-  promote_admin: ['PROMOTE', 'log-action-promote'], demote_admin: ['DEMOTE', 'log-action-demote'],
-  set_admin_title: ['SET TITLE', 'log-action-default'], pin_message: ['PIN MSG', 'log-action-default'],
-  delete_message: ['DEL MSG', 'log-action-ban'], add_tag: ['ADD TAG', 'log-action-promote'],
-};
+// actionLabels removed — use getActionLabels()
 
 async function loadAdminLog(append = false) {
   if (!currentChat) return;
@@ -1774,7 +2249,7 @@ async function loadAdminLog(append = false) {
   try {
     const logs = await api(`/api/adminlog?chat_id=${currentChat.id}&limit=50&offset=${adminLogOffset}`);
     const html = logs.map(l => {
-      const [label, cls] = actionLabels[l.action] || [l.action.toUpperCase(), 'log-action-default'];
+      const [label, cls] = getActionLabels()[l.action] || [l.action.toUpperCase(), 'log-action-default'];
       const target = l.target_name || (l.target_id ? `ID:${l.target_id}` : '');
       return `<div class="log-row">
         <span class="log-action ${cls}">${label}</span>
@@ -1784,7 +2259,7 @@ async function loadAdminLog(append = false) {
     }).join('');
     const list = document.getElementById('adminLogList');
     if (append) list.innerHTML += html;
-    else list.innerHTML = html || '<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">NO ENTRIES</div>';
+    else list.innerHTML = html || `<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">${t('no_entries')}</div>`;
     document.getElementById('loadMoreLogBtn').style.display = logs.length >= 50 ? 'inline-flex' : 'none';
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -1809,7 +2284,7 @@ async function loadTags() {
           <span class="tag-chip" style="background:${t.color}15; color:${t.color}; border:1px solid ${t.color}33">${esc(t.tag)}<span class="tag-remove" onclick="removeTag(${t.id})">\u00d7</span></span>
         `).join('')}</div>
       </div>
-    `).join('') || '<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">NO TAGS ASSIGNED</div>';
+    `).join('') || `<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">${t('no_tags')}</div>`;
   } catch(e) { toast(e.message, 'error'); }
 }
 
@@ -1819,19 +2294,19 @@ async function addTag() {
   const username = document.getElementById('tagUsername').value.trim();
   const tag = document.getElementById('tagName').value.trim();
   const color = document.getElementById('tagColor').value;
-  if (!userID || !tag) { toast('User ID and tag required', 'error'); return; }
+  if (!userID || !tag) { toast(t('user_id_tag_required'), 'error'); return; }
   try {
     await api('/api/tags/add', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ bot_id: currentBotID, chat_id: currentChat.id, user_id: userID, username: username || `User ${userID}`, tag, color })
     });
     document.getElementById('tagName').value = '';
-    toast('Tag added'); loadTags();
+    toast(t('tag_added')); loadTags();
   } catch(e) { toast(e.message, 'error'); }
 }
 
 async function removeTag(tagID) {
-  try { await api(`/api/tags/remove?id=${tagID}`, { method: 'POST' }); toast('Tag removed'); loadTags(); }
+  try { await api(`/api/tags/remove?id=${tagID}`, { method: 'POST' }); toast(t('tag_removed')); loadTags(); }
   catch(e) { toast(e.message, 'error'); }
 }
 
@@ -1849,25 +2324,25 @@ async function loadUsers(append = false) {
         <div class="user-card-info">
           <div class="user-card-name">${esc(u.username)} <span class="user-id">${u.user_id}</span></div>
           <div class="user-card-meta">
-            <span>${u.message_count} <span class="meta-val">msg</span></span>
-            <span>last: <span class="meta-val">${u.last_seen}</span></span>
+            <span>${u.message_count} <span class="meta-val">${t('msg_count')}</span></span>
+            <span>${t('last_seen')} <span class="meta-val">${u.last_seen}</span></span>
           </div>
           ${u.tags?.length ? `<div class="user-card-tags">${u.tags.map(t => `
             <span class="tag-chip" style="background:${t.color}15; color:${t.color}; border:1px solid ${t.color}33">${esc(t.tag)}<span class="tag-remove" onclick="removeTagAndReloadUsers(${t.id})">\u00d7</span></span>
           `).join('')}</div>` : ''}
         </div>
         <div class="user-card-actions">
-          <button class="btn btn-sm" onclick="quickTag(${u.user_id}, '${esc(u.username).replace(/'/g, "\\'")}')">TAG</button>
+          <button class="btn btn-sm" onclick="quickTag(${u.user_id}, '${esc(u.username).replace(/'/g, "\\'")}')">${t('tag')}</button>
           ${currentChat.is_admin ? `
-            <button class="btn btn-danger btn-sm" onclick="banUsr(${u.user_id})">BAN</button>
-            <button class="btn btn-sm" onclick="unbanUsr(${u.user_id})">UNBAN</button>
+            <button class="btn btn-danger btn-sm" onclick="banUsr(${u.user_id})">${t('ban')}</button>
+            <button class="btn btn-sm" onclick="unbanUsr(${u.user_id})">${t('unban')}</button>
           ` : ''}
         </div>
       </div>
     `).join('');
     const list = document.getElementById('usersList');
     if (append) list.innerHTML += html;
-    else list.innerHTML = html || '<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">NO USERS FOUND</div>';
+    else list.innerHTML = html || `<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">${t('no_users')}</div>`;
     document.getElementById('loadMoreUsersBtn').style.display = users.length >= 50 ? 'inline-flex' : 'none';
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -1876,23 +2351,23 @@ function loadMoreUsers() { usersOffset += 50; loadUsers(true); }
 function debounceUserSearch() { clearTimeout(usersSearchTimeout); usersSearchTimeout = setTimeout(() => loadUsers(), 300); }
 
 async function removeTagAndReloadUsers(tagID) {
-  try { await api(`/api/tags/remove?id=${tagID}`, { method: 'POST' }); toast('Tag removed'); loadUsers(); }
+  try { await api(`/api/tags/remove?id=${tagID}`, { method: 'POST' }); toast(t('tag_removed')); loadUsers(); }
   catch(e) { toast(e.message, 'error'); }
 }
 
 function quickTag(userID, username) {
-  const tag = prompt('Tag name (e.g. VIP, Spammer, Trusted):');
+  const tag = prompt(t('tag_prompt'));
   if (!tag) return;
   api('/api/tags/add', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ bot_id: currentBotID, chat_id: currentChat.id, user_id: userID, username, tag, color: '#00f0ff' })
-  }).then(() => { toast('Tag added'); loadUsers(); }).catch(e => toast(e.message, 'error'));
+  }).then(() => { toast(t('tag_added')); loadUsers(); }).catch(e => toast(e.message, 'error'));
 }
 
 // ===== BOT MANAGEMENT =====
 
 function showBotModal(bot = null) {
-  document.getElementById('botModalTitle').textContent = bot ? 'Edit Bot' : 'Add Bot';
+  document.getElementById('botModalTitle').textContent = bot ? t('edit_bot') : t('add_bot');
   document.getElementById('botEditID').value = bot ? bot.id : '';
   document.getElementById('botFormName').value = bot ? bot.name : '';
   document.getElementById('botFormToken').value = bot ? bot.token : '';
@@ -1918,7 +2393,7 @@ async function validateBotToken() {
   const token = document.getElementById('botFormToken').value.trim();
   if (!token) return;
   const status = document.getElementById('botTokenStatus');
-  status.textContent = 'checking...'; status.style.color = 'var(--text3)';
+  status.textContent = t('checking'); status.style.color = 'var(--text3)';
   try {
     const res = await api(`/api/bots/validate?token=${encodeURIComponent(token)}`);
     status.textContent = `@${res.username}`; status.style.color = 'var(--green)';
@@ -1941,8 +2416,8 @@ async function saveBot() {
     secret_token: document.getElementById('botFormSecretToken').value.trim(),
     polling_timeout: parseInt(document.getElementById('botFormTimeout').value) || 30,
   };
-  if (!data.name || !data.token) { toast('Name and token required', 'error'); return; }
-  if (data.proxy_enabled && !data.backend_url) { toast('Backend URL required for proxy mode', 'error'); return; }
+  if (!data.name || !data.token) { toast(t('name_token_required'), 'error'); return; }
+  if (data.proxy_enabled && !data.backend_url) { toast(t('backend_url_required'), 'error'); return; }
   try {
     if (editID) {
       data.id = parseInt(editID);
@@ -1951,7 +2426,7 @@ async function saveBot() {
       await api('/api/bots/add', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
     }
     closeBotModal();
-    toast(editID ? 'Bot updated' : 'Bot added');
+    toast(editID ? t('bot_updated') : t('bot_added'));
     await loadBots();
     if (editID && currentBotID === parseInt(editID)) {
       currentBot = allBots.find(b => b.id === currentBotID);
@@ -1962,7 +2437,7 @@ async function saveBot() {
 
 async function checkBackendHealth() {
   const btn = document.getElementById('btnCheckHealth');
-  if (btn) { btn.textContent = 'CHECKING...'; btn.disabled = true; }
+  if (btn) { btn.textContent = t('checking'); btn.disabled = true; }
   try {
     const result = await api(`/api/bots/health?id=${currentBotID}`);
     if (result.error) {
@@ -1974,7 +2449,7 @@ async function checkBackendHealth() {
     currentBot = allBots.find(b => b.id === currentBotID);
     if (currentBot) showBotDetail();
   } catch(e) { toast(e.message, 'error'); }
-  if (btn) { btn.textContent = 'CHECK WEBHOOK'; btn.disabled = false; }
+  if (btn) { btn.textContent = t('check_webhook'); btn.disabled = false; }
 }
 
 function editCurrentBot() {
@@ -1984,7 +2459,7 @@ function editCurrentBot() {
 
 async function deleteCurrentBot() {
   if (!currentBot) return;
-  if (!confirm('Delete this bot and all its data?')) return;
+  if (!confirm(t('confirm_delete_bot'))) return;
   try {
     await api(`/api/bots/delete?id=${currentBot.id}`, { method: 'POST' });
     currentBotID = null; currentBot = null; currentChat = null;
@@ -1993,7 +2468,7 @@ async function deleteCurrentBot() {
     document.getElementById('emptyState').style.display = 'flex';
     document.getElementById('chatsLabel').style.display = 'none';
     document.getElementById('chatList').innerHTML = '';
-    toast('Bot deleted'); await loadBots();
+    toast(t('bot_deleted')); await loadBots();
   } catch(e) { toast(e.message, 'error'); }
 }
 

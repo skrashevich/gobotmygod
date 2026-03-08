@@ -104,6 +104,11 @@ Custom classification system for chat members:
 - Route rules managed per-bot from the web UI with enable/disable toggle
 - Loop protection: bot-originated messages are not reverse-routed
 
+### Internationalization (i18n)
+- Interface available in **English** and **Russian**
+- Language toggle button in the sidebar header (EN/RU)
+- Preference saved in localStorage and applied instantly without page reload
+
 ### Chat Info
 - Chat ID, type, title, username
 - Member count

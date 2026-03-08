@@ -29,7 +29,7 @@ Monolithic Go app (all `package main`), 5 source files + 1 embedded SPA template
 - **proxy.go** — `ProxyManager` manages ALL bots uniformly (no CLI vs web distinction). Runs independent `pollLoop` per bot with raw JSON `getUpdates`. Dual-mode per bot: forwards updates to backend URL (proxy) and/or processes them for chat tracking (management). `WebhookHandler()` for bots in webhook mode. Creates managed Bot instances automatically at Start(). Periodic backend health checks every 60s.
 - **server.go** — HTTP server with `embed.FS` for SPA. REST API for all bot/chat/message/admin operations. Telegram API proxy at `/tgapi/` captures outgoing bot messages. Multi-bot: resolves bot instances via `getBotFromRequest()` / `resolveBot()`.
 - **store.go** — SQLite with WAL mode. All data models and DB operations. Auto-migrates schema on startup.
-- **templates/index.html** — Complete SPA (vanilla JS, no framework). Dark/light theme (Sora + JetBrains Mono, auto-switches via `prefers-color-scheme`). Compiled into binary via `//go:embed`.
+- **templates/index.html** — Complete SPA (vanilla JS, no framework). Dark/light theme (Sora + JetBrains Mono, auto-switches via `prefers-color-scheme`). i18n with EN/RU support via `i18n` object and `t(key)` function. Compiled into binary via `//go:embed`.
 
 ## Key Design Decisions
 
@@ -54,7 +54,7 @@ Monolithic Go app (all `package main`), 5 source files + 1 embedded SPA template
 
 ## Language
 
-Project uses Russian for UI labels, comments may be in English or Russian. README is English.
+Frontend supports English and Russian via i18n system in `templates/index.html`. Translations are in the `i18n` object (keys `en`/`ru`). `t(key)` returns the current language string. `applyLang()` re-renders all static and dynamic content. Language preference stored in localStorage. Comments may be in English or Russian. README is English.
 
 ## Screenshots
 
