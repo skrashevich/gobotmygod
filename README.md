@@ -4,6 +4,28 @@ Web-based command center for managing Telegram groups and channels via Bot API, 
 
 Give it a bot token — it discovers which chats the bot is in, whether it has admin privileges, and provides a full-featured web dashboard for monitoring, analytics, and administration. Manage multiple bots from a single instance.
 
+## Screenshots
+
+| Dashboard | Bot Detail |
+|-----------|------------|
+| ![Dashboard](screenshots/01-dashboard.png) | ![Bot Detail](screenshots/02-bot-detail.png) |
+
+| Messages | Analytics |
+|----------|-----------|
+| ![Messages](screenshots/03-messages.png) | ![Analytics](screenshots/04-analytics.png) |
+
+| Admins | Users |
+|--------|-------|
+| ![Admins](screenshots/05-admins.png) | ![Users](screenshots/06-users.png) |
+
+| Tags | Audit Log |
+|------|-----------|
+| ![Tags](screenshots/07-tags.png) | ![Audit Log](screenshots/08-audit-log.png) |
+
+| Add Bot |
+|---------|
+| ![Add Bot](screenshots/09-add-bot.png) |
+
 ## Features
 
 ### Multi-Bot Management
