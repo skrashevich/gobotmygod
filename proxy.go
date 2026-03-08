@@ -512,6 +512,10 @@ func (pm *ProxyManager) applyRoutes(sourceBotID int64, rawUpdate map[string]inte
 
 		var targetMsgID int
 		switch route.Action {
+		case "drop":
+			log.Printf("[routing] route id=%d DROP: %s=%q on bot %d — message ignored",
+				route.ID, route.ConditionType, route.ConditionValue, sourceBotID)
+			return
 		case "forward":
 			if msgText != "" {
 				sentID, err := targetBot.SendMessageGetID(destChatID, msgText)

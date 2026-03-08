@@ -125,7 +125,7 @@ type Route struct {
 	TargetBotID  int64  `json:"target_bot_id"`
 	ConditionType string `json:"condition_type"` // "text", "user_id", "chat_id"
 	ConditionValue string `json:"condition_value"` // regex pattern for text, ID for user/chat
-	Action       string `json:"action"`          // "forward" (send via target bot) or "copy" (proxy raw update)
+	Action       string `json:"action"`          // "forward", "copy", or "drop" (ignore message)
 	TargetChatID int64  `json:"target_chat_id"`  // chat to forward/copy to (0 = same chat)
 	Enabled      bool   `json:"enabled"`
 	Description  string `json:"description"`

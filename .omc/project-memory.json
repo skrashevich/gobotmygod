@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1772959477786,
+  "projectRoot": "/Users/svk/Documents/Projects.nosync/gobotmygod",
+  "techStack": {
+    "languages": [
+      {
+        "name": "Go",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "go.mod"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "go",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "screenshots": {
+      "path": "screenshots",
+      "purpose": null,
+      "fileCount": 9,
+      "lastAccessed": 1772959477754,
+      "keyFiles": [
+        "01-dashboard.png",
+        "02-bot-detail.png",
+        "03-messages.png",
+        "04-analytics.png",
+        "05-admins.png"
+      ]
+    },
+    "templates": {
+      "path": "templates",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1772959477755,
+      "keyFiles": [
+        "index.html"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

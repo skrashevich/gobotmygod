@@ -518,6 +518,10 @@ body::before {
   background: rgba(255,170,0,0.1); border: 1px solid rgba(255,170,0,0.2);
   color: var(--amber);
 }
+.route-action-drop {
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+  color: var(--red, #ef4444);
+}
 
 .route-cond {
   display: inline-flex; align-items: center; gap: 4px;
@@ -674,6 +678,7 @@ body::before {
 
 [data-theme="light"] .route-action-fwd { background: rgba(8,145,178,0.1); border-color: rgba(8,145,178,0.25); }
 [data-theme="light"] .route-action-copy { background: rgba(217,119,6,0.1); border-color: rgba(217,119,6,0.25); }
+[data-theme="light"] .route-action-drop { background: rgba(220,38,38,0.1); border-color: rgba(220,38,38,0.25); }
 [data-theme="light"] .route-snat-badge { background: rgba(219,39,119,0.08); border-color: rgba(219,39,119,0.15); }
 [data-theme="light"] .route-toggle-on { background: rgba(5,150,105,0.1); border-color: rgba(5,150,105,0.25); }
 [data-theme="light"] .route-toggle-off { background: rgba(219,39,119,0.08); border-color: rgba(219,39,119,0.2); }
@@ -994,6 +999,7 @@ p, .msg-text { text-wrap: pretty; }
       <select id="routeAction" class="route-modal-select" onchange="updateRoutePreview()">
         <option value="forward">Forward &mdash; send text as new message</option>
         <option value="copy">Copy &mdash; forward original with attribution</option>
+        <option value="drop">Drop &mdash; ignore message, do not forward</option>
       </select>
     </div>
     <div class="modal-field">
@@ -1143,7 +1149,7 @@ const i18n = {
     no_routing_rules: 'NO ROUTING RULES',
     route_hint: 'Route messages between bots by text, user or chat',
     cond_text: 'TEXT', cond_user: 'USER', cond_chat: 'CHAT',
-    action_fwd: 'FWD', action_copy: 'COPY', snat: 'S-NAT',
+    action_fwd: 'FWD', action_copy: 'COPY', action_drop: 'DROP', snat: 'S-NAT',
     configure_rule: 'configure rule below',
     confirm_delete_route: 'Delete this routing rule?',
     route_saved: 'Route saved', route_deleted: 'Route deleted',
@@ -1155,6 +1161,7 @@ const i18n = {
     then_action: 'Then \u2014 Action',
     action_forward_desc: 'Forward \u2014 send text as new message',
     action_copy_desc: 'Copy \u2014 forward original with attribution',
+    action_drop_desc: 'Drop \u2014 ignore message, do not forward',
     via_target_bot: 'Via \u2014 Target Bot',
     to_target_chat: 'To \u2014 Target Chat ID', target_chat_hint: '(0 = same chat as source)',
     note: 'Note', note_placeholder: 'optional description...',
@@ -1262,7 +1269,7 @@ const i18n = {
     no_routing_rules: '\u041d\u0415\u0422 \u041f\u0420\u0410\u0412\u0418\u041b',
     route_hint: '\u041c\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u044f \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439 \u043c\u0435\u0436\u0434\u0443 \u0431\u043e\u0442\u0430\u043c\u0438',
     cond_text: '\u0422\u0415\u041a\u0421\u0422', cond_user: '\u041f\u041e\u041b\u042c\u0417.', cond_chat: '\u0427\u0410\u0422',
-    action_fwd: '\u041f\u0415\u0420.', action_copy: '\u041a\u041e\u041f.', snat: 'S-NAT',
+    action_fwd: '\u041f\u0415\u0420.', action_copy: '\u041a\u041e\u041f.', action_drop: '\u0414\u0420\u041e\u041f', snat: 'S-NAT',
     configure_rule: '\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u0442\u0435 \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u043d\u0438\u0436\u0435',
     confirm_delete_route: '\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u043c\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u0438?',
     route_saved: '\u041c\u0430\u0440\u0448\u0440\u0443\u0442 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d', route_deleted: '\u041c\u0430\u0440\u0448\u0440\u0443\u0442 \u0443\u0434\u0430\u043b\u0451\u043d',
@@ -1274,6 +1281,7 @@ const i18n = {
     then_action: '\u0422\u043e\u0433\u0434\u0430 \u2014 \u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0435',
     action_forward_desc: '\u041f\u0435\u0440\u0435\u0441\u043b\u0430\u0442\u044c \u2014 \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u043a\u0430\u043a \u043d\u043e\u0432\u043e\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435',
     action_copy_desc: '\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u2014 \u043f\u0435\u0440\u0435\u0441\u043b\u0430\u0442\u044c \u0441 \u0443\u043a\u0430\u0437\u0430\u043d\u0438\u0435\u043c \u0430\u0432\u0442\u043e\u0440\u0430',
+    action_drop_desc: '\u0414\u0440\u043e\u043f \u2014 \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c, \u043d\u0435 \u043f\u0435\u0440\u0435\u0441\u044b\u043b\u0430\u0442\u044c',
     via_target_bot: '\u0427\u0435\u0440\u0435\u0437 \u2014 \u0411\u043e\u0442-\u043f\u043e\u043b\u0443\u0447\u0430\u0442\u0435\u043b\u044c',
     to_target_chat: '\u041a\u0443\u0434\u0430 \u2014 ID \u0447\u0430\u0442\u0430', target_chat_hint: '(0 = \u0442\u043e\u0442 \u0436\u0435 \u0447\u0430\u0442)',
     note: '\u0417\u0430\u043c\u0435\u0442\u043a\u0430', note_placeholder: '\u043e\u043f\u0438\u0441\u0430\u043d\u0438\u0435...',
@@ -1477,9 +1485,10 @@ function updateModalLabels() {
     condTypeSelect.options[2].textContent = t('cond_from_chat');
   }
   const actionSelect = document.getElementById('routeAction');
-  if (actionSelect && actionSelect.options.length >= 2) {
+  if (actionSelect && actionSelect.options.length >= 3) {
     actionSelect.options[0].textContent = t('action_forward_desc');
     actionSelect.options[1].textContent = t('action_copy_desc');
+    actionSelect.options[2].textContent = t('action_drop_desc');
   }
   // route modal toggle label
   const routeToggleLabel = document.querySelector('#routeModal .route-toggle-label');
@@ -1745,9 +1754,8 @@ function renderRoutes(routes) {
     const targetName = targetBot ? (targetBot.name || '@' + targetBot.bot_username) : `Bot #${r.target_bot_id}`;
     const condLabels = {text: t('cond_text'), user_id: t('cond_user'), chat_id: t('cond_chat')};
     const condLabel = condLabels[r.condition_type] || r.condition_type;
-    const isCopy = r.action === 'copy';
-    const actionBadgeClass = isCopy ? 'route-action-copy' : 'route-action-fwd';
-    const actionLabel = isCopy ? t('action_copy') : t('action_fwd');
+    const actionBadgeClass = r.action === 'drop' ? 'route-action-drop' : r.action === 'copy' ? 'route-action-copy' : 'route-action-fwd';
+    const actionLabel = r.action === 'drop' ? t('action_drop') : r.action === 'copy' ? t('action_copy') : t('action_fwd');
     return `
       <div class="route-item ${r.enabled ? '' : 'route-disabled'}" style="animation-delay:${i * 40}ms">
         <div class="route-indicator ${r.enabled ? 'route-indicator-active' : 'route-indicator-inactive'}"></div>
@@ -1758,10 +1766,10 @@ function renderRoutes(routes) {
               <span class="route-cond-type">${condLabel}</span>
               <span class="route-cond-value">${esc(r.condition_value)}</span>
             </span>
-            <span class="route-arrow"></span>
+            ${r.action !== 'drop' ? `<span class="route-arrow"></span>
             <span class="route-target">${esc(targetName)}</span>
             ${r.target_chat_id ? `<span class="route-target-chat">chat:${r.target_chat_id}</span>` : ''}
-            <span class="route-snat-badge">S-NAT</span>
+            <span class="route-snat-badge">S-NAT</span>` : ''}
           </div>
           ${r.description ? `<div class="route-meta"><span class="route-desc">${esc(r.description)}</span></div>` : ''}
         </div>
@@ -1785,7 +1793,9 @@ function updateRoutePreview() {
 
   const condLabels = {text: t('cond_text'), user_id: t('cond_user'), chat_id: t('cond_chat')};
   const condLabel = condLabels[condType] || condType;
-  const isCopy = action === 'copy';
+  const isDrop = action === 'drop';
+  const actionBadgeClass = isDrop ? 'route-action-drop' : action === 'copy' ? 'route-action-copy' : 'route-action-fwd';
+  const actionLbl = isDrop ? t('action_drop') : action === 'copy' ? t('action_copy') : t('action_fwd');
 
   const preview = document.getElementById('routeFlowPreview');
   if (!condValue) {
@@ -1799,8 +1809,8 @@ function updateRoutePreview() {
       <span class="route-cond-value">${esc(condValue.length > 20 ? condValue.substring(0,20) + '...' : condValue)}</span>
     </span>
     <span class="route-arrow"></span>
-    <span class="route-action-badge ${isCopy ? 'route-action-copy' : 'route-action-fwd'}">${isCopy ? t('action_copy') : t('action_fwd')}</span>
-    <span style="color:var(--green)">${esc(targetName)}</span>
+    <span class="route-action-badge ${actionBadgeClass}">${actionLbl}</span>
+    ${isDrop ? '' : `<span style="color:var(--green)">${esc(targetName)}</span>`}
   `;
 }
 
