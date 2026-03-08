@@ -124,7 +124,7 @@ Custom classification system for chat members:
 ## Installation
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/skrashevich/botmux.git
 cd botmux
 go build -o botmux .
 ```
@@ -132,7 +132,7 @@ go build -o botmux .
 Or install directly:
 
 ```bash
-go install botmux@latest
+go install github.com/skrashevich/botmux@latest
 ```
 
 ## Usage
