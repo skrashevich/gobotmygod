@@ -777,14 +777,12 @@ function showBotDetail() {
   if (b.proxy_enabled && b.backend_url) {
     actions.push(`<button class="btn btn-sm" onclick="checkBackendHealth()" id="btnCheckHealth">CHECK WEBHOOK</button>`);
   }
-  if (b.source !== 'cli') {
-    actions.push(`<button class="btn btn-danger btn-sm" onclick="deleteCurrentBot()">DELETE</button>`);
-  }
+  actions.push(`<button class="btn btn-danger btn-sm" onclick="deleteCurrentBot()">DELETE</button>`);
   document.getElementById('botDetailActions').innerHTML = actions.join('');
 
   const rows = [
     ['Username', b.bot_username ? '@' + b.bot_username : '\u2014'],
-    ['Source', b.source === 'cli' ? 'CLI (startup)' : 'Web UI'],
+    ['Source', b.source === 'cli' ? 'CLI (startup token)' : 'Web UI'],
     ['Management', b.manage_enabled ? '<span style="color:var(--green)">ENABLED</span>' : 'Disabled'],
     ['Proxy', b.proxy_enabled ? '<span style="color:var(--green)">ENABLED</span>' : 'Disabled'],
   ];
@@ -1393,7 +1391,7 @@ function editCurrentBot() {
 }
 
 async function deleteCurrentBot() {
-  if (!currentBot || currentBot.source === 'cli') return;
+  if (!currentBot) return;
   if (!confirm('Delete this bot and all its data?')) return;
   try {
     await api(`/api/bots/delete?id=${currentBot.id}`, { method: 'POST' });

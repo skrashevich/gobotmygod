@@ -150,13 +150,7 @@ func (s *Server) handleBotList(w http.ResponseWriter, r *http.Request) {
 	}
 	var result []BotStatus
 	for _, b := range bots {
-		running := false
-		if b.Source == "cli" {
-			running = true // CLI bot is always running
-		} else {
-			running = s.proxy.IsRunning(b.ID)
-		}
-		result = append(result, BotStatus{BotConfig: b, Running: running})
+		result = append(result, BotStatus{BotConfig: b, Running: s.proxy.IsRunning(b.ID)})
 	}
 	if result == nil {
 		result = []BotStatus{}
@@ -222,32 +216,21 @@ func (s *Server) handleBotUpdate(w http.ResponseWriter, r *http.Request) {
 		req.PollingTimeout = 30
 	}
 
-	// Check if this is a CLI bot — don't allow changing source
+	// Preserve the source field
 	existing, err := s.store.GetBotConfig(req.ID)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	if existing.Source == "cli" {
-		req.Source = "cli"
-	}
-
-	if req.ManageEnabled || req.ProxyEnabled {
-		if err := s.proxy.DeleteWebhook(req.Token); err != nil {
-			writeError(w, err)
-			return
-		}
-	}
+	req.Source = existing.Source
 
 	if err := s.store.UpdateBotConfig(req); err != nil {
 		writeError(w, err)
 		return
 	}
 
-	// For non-CLI bots, restart via proxy manager
-	if existing.Source != "cli" {
-		s.proxy.RestartBot(req.ID)
-	}
+	// Restart via proxy manager (works for all bots)
+	s.proxy.RestartBot(req.ID)
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
@@ -257,17 +240,6 @@ func (s *Server) handleBotDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
-
-	// Don't allow deleting CLI bots
-	bot, err := s.store.GetBotConfig(id)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	if bot.Source == "cli" {
-		writeError(w, fmt.Errorf("cannot delete CLI bot"))
-		return
-	}
 
 	s.proxy.stopBot(id)
 	s.proxy.UnregisterManagedBot(id)
