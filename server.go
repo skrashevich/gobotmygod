@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"encoding/json"
 	"fmt"
+	"image/png"
 	"io"
 	"log"
 	"mime"
@@ -13,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	webp "github.com/skrashevich/go-webp"
 )
 
 //go:embed templates
@@ -1001,8 +1005,31 @@ func (s *Server) handleMediaProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer fileResp2.Body.Close()
 
+	// Check if WebP and convert to PNG for browser compatibility (stickers etc.)
+	ct := fileResp2.Header.Get("Content-Type")
+	isWebP := strings.Contains(ct, "webp") || strings.HasSuffix(fileResp.Result.FilePath, ".webp")
+	if isWebP {
+		body, err := io.ReadAll(fileResp2.Body)
+		if err != nil {
+			http.Error(w, "read failed", 500)
+			return
+		}
+		img, err := webp.Decode(bytes.NewReader(body))
+		if err != nil {
+			// Fallback: serve original WebP
+			w.Header().Set("Content-Type", ct)
+			w.Header().Set("Cache-Control", "public, max-age=86400")
+			w.Write(body)
+			return
+		}
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		png.Encode(w, img)
+		return
+	}
+
 	// Forward content type and cache
-	if ct := fileResp2.Header.Get("Content-Type"); ct != "" {
+	if ct != "" {
 		w.Header().Set("Content-Type", ct)
 	}
 	w.Header().Set("Cache-Control", "public, max-age=86400")

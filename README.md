@@ -45,6 +45,8 @@ Give it a bot token — it discovers which chats the bot is in, whether it has a
 - Real-time collection of all messages and channel posts the bot can see
 - Full-text search across message history
 - Paginated message feed with sender, timestamp, and content
+- **Reply to messages** — click the reply button on any message to send a reply in-context
+- Reply chain visualization — messages show "Replying to @user" badge with click-to-scroll
 - Automatic chat/channel discovery — the bot detects groups it's added to
 - Soft-deleted message tracking (visually marked in the UI)
 
@@ -118,6 +120,13 @@ Custom classification system for chat members:
 - Interface available in **English** and **Russian**
 - Language toggle button in the sidebar header (EN/RU)
 - Preference saved in localStorage and applied instantly without page reload
+
+### Media Support
+- Inline rendering of photos, videos, animations (GIF), stickers, voice messages, and audio
+- **Image lightbox** — click any photo to view full-size in an overlay (close with click or Escape)
+- WebP sticker conversion — stickers are automatically converted from WebP to PNG via [go-webp](https://github.com/skrashevich/go-webp) for universal browser compatibility
+- Video and audio players embedded directly in the message feed
+- File downloads for documents and unsupported media types
 
 ### Chat Info
 - Chat ID, type, title, username
@@ -319,7 +328,7 @@ All endpoints return JSON. Errors return `{"error": "message"}` with HTTP 500. M
 |--------|----------|-------------|
 | GET | `/api/messages?chat_id=&limit=&offset=` | Get messages (paginated) |
 | GET | `/api/messages/search?chat_id=&q=` | Search messages |
-| POST | `/api/messages/send` | Send message (JSON body: `{bot_id, chat_id, text}`) |
+| POST | `/api/messages/send` | Send message (JSON body: `{bot_id, chat_id, text, reply_to_message_id?}`) |
 | POST | `/api/messages/pin?bot_id=&chat_id=&message_id=` | Pin a message |
 | POST | `/api/messages/unpin?bot_id=&chat_id=&message_id=` | Unpin a message |
 | POST | `/api/messages/delete?bot_id=&chat_id=&message_id=` | Delete a message |
