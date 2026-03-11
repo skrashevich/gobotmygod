@@ -21,6 +21,14 @@ go build -o botmux .
 No linter configured. Single `go build` produces the binary.
 
 ```bash
+# Docker
+TELEGRAM_BOT_TOKEN="..." docker compose up -d
+
+# Multi-arch build
+docker buildx build --platform linux/amd64,linux/arm64 -t botmux .
+```
+
+```bash
 # Run tests
 go test -v ./...
 ```
@@ -54,12 +62,13 @@ Monolithic Go app (all `package main`), 6 source files + 1 test file + 1 embedde
 
 **LLM routing**: `ProxyManager` has `llmRouter *LLMRouter`. `applyLLMRoutes()` runs after rule-based `applyRoutes()` in `processUpdate()`. LLM receives message + all bot descriptions/chats and returns `{target_bot_id, target_chat_id, action, reason}`. Reverse routing works via existing `route_mappings` (RouteID=0 for LLM routes). Config managed via `/api/llm-config` and `/api/llm-config/save`. Bot descriptions via `/api/bots/description`.
 
-**Media handling**: Messages store `media_type` and `file_id`. `bot.go:extractMedia()` detects photo/video/animation/sticker/voice/audio/document/video_note from Telegram updates. `server.go:captureSentMessage` extracts media from API responses. `/api/media?file_id=&bot_id=` proxies file downloads from Telegram. Frontend renders images, video players, audio players inline.
+**Media handling**: Messages store `media_type` and `file_id`. `bot.go:extractMedia()` detects photo/video/animation/sticker/voice/audio/document/video_note from Telegram updates. For stickers, uses `Thumbnail.FileID` (static preview) instead of main file (which may be TGS/WebM). `server.go:captureSentMessage` extracts media from API responses. `/api/media?file_id=&bot_id=` proxies file downloads from Telegram with automatic WebP→PNG conversion via `go-webp` for browser compatibility. Frontend renders images with lightbox overlay (click to zoom), video players, audio players inline. Messages support reply-to with `reply_to_message_id` in send API and visual reply badges in the UI.
 
 ## Dependencies
 
 - `github.com/OvyFlash/telegram-bot-api` — Telegram Bot API (actively maintained fork)
 - `modernc.org/sqlite` — SQLite driver (pure Go, no CGO)
+- `github.com/skrashevich/go-webp` — Pure Go WebP codec for sticker conversion (WebP→PNG)
 
 ## Language
 

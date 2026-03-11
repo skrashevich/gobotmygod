@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1772959477786,
+  "lastScanned": 1773240426798,
   "projectRoot": "/Users/svk/Documents/Projects.nosync/gobotmygod",
   "techStack": {
     "languages": [
@@ -45,7 +45,7 @@
       "path": "screenshots",
       "purpose": null,
       "fileCount": 9,
-      "lastAccessed": 1772959477754,
+      "lastAccessed": 1773240426785,
       "keyFiles": [
         "01-dashboard.png",
         "02-bot-detail.png",
@@ -58,12 +58,73 @@
       "path": "templates",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1772959477755,
+      "lastAccessed": 1773240426786,
       "keyFiles": [
         "index.html"
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "templates/index.html",
+      "accessCount": 33,
+      "lastAccessed": 1773241719347,
+      "type": "directory"
+    },
+    {
+      "path": "server.go",
+      "accessCount": 10,
+      "lastAccessed": 1773242219141,
+      "type": "directory"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 10,
+      "lastAccessed": 1773259459585,
+      "type": "file"
+    },
+    {
+      "path": "CLAUDE.md",
+      "accessCount": 6,
+      "lastAccessed": 1773259478821,
+      "type": "file"
+    },
+    {
+      "path": "bot.go",
+      "accessCount": 4,
+      "lastAccessed": 1773241706977,
+      "type": "directory"
+    },
+    {
+      "path": "",
+      "accessCount": 1,
+      "lastAccessed": 1773240870136,
+      "type": "directory"
+    },
+    {
+      "path": "go.mod",
+      "accessCount": 1,
+      "lastAccessed": 1773259438277,
+      "type": "file"
+    },
+    {
+      "path": "Dockerfile",
+      "accessCount": 1,
+      "lastAccessed": 1773259445925,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.yml",
+      "accessCount": 1,
+      "lastAccessed": 1773259450749,
+      "type": "file"
+    },
+    {
+      "path": ".dockerignore",
+      "accessCount": 1,
+      "lastAccessed": 1773259501721,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }

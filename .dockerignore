@@ -1,0 +1,9 @@
+botmux
+botdata.db
+*.db
+*.db-wal
+*.db-shm
+screenshots/
+.git/
+.omc/
+.claude/

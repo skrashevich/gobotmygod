@@ -1,0 +1,14 @@
+services:
+  botmux:
+    build: .
+    container_name: botmux
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - botmux-data:/data
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+
+volumes:
+  botmux-data:

@@ -4,3 +4,5 @@ botmux
 *.db-shm
 .env
 .omc
+.DS_Store
+screenshots/

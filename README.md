@@ -154,6 +154,26 @@ Or install directly:
 go install github.com/skrashevich/botmux@latest
 ```
 
+### Docker
+
+```bash
+# Build and run with docker compose
+TELEGRAM_BOT_TOKEN="YOUR_TOKEN" docker compose up -d
+
+# Or build the image manually (multi-arch supported)
+docker build -t botmux .
+docker run -d -p 8080:8080 -v botmux-data:/data \
+  -e TELEGRAM_BOT_TOKEN="YOUR_TOKEN" botmux
+```
+
+Multi-architecture build (amd64, arm64):
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 -t botmux .
+```
+
+Data is stored in the `/data` volume inside the container.
+
 ## Usage
 
 ### Basic (polling mode, default)
