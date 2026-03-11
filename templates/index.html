@@ -288,6 +288,9 @@ body::before {
 .msg-media { margin: 4px 0; }
 .msg-media-img img { max-width: 280px; max-height: 200px; border-radius: var(--radius-sm); cursor: pointer; transition: opacity var(--transition); display: block; }
 .msg-media-img img:hover { opacity: 0.85; }
+.media-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+.media-lightbox.active { display: flex; }
+.media-lightbox img { max-width: 95vw; max-height: 95vh; object-fit: contain; border-radius: 4px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
 .msg-media-video video { max-width: 320px; max-height: 240px; border-radius: var(--radius-sm); display: block; outline: none; }
 .msg-media-audio { display: flex; align-items: center; gap: 8px; }
 .msg-media-audio audio { height: 32px; max-width: 220px; }
@@ -300,6 +303,13 @@ body::before {
 .msg-compose-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text); font-family: var(--ff-mono); font-size: 12px; outline: none; transition: border-color var(--transition), box-shadow var(--transition); }
 .msg-compose-input::placeholder { color: var(--text3); }
 .msg-compose-input:focus { border-color: var(--cyan-dim); }
+.reply-preview { display: none; align-items: center; gap: 8px; padding: 6px 14px; background: var(--surface2); border-top: 1px solid var(--border); font-family: var(--ff-mono); font-size: 11px; color: var(--text2); }
+.reply-preview.active { display: flex; }
+.reply-preview span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reply-preview .reply-cancel { cursor: pointer; color: var(--magenta); font-weight: 700; padding: 2px 6px; border-radius: var(--radius-sm); }
+.reply-preview .reply-cancel:hover { background: var(--surface); }
+.msg-reply-badge { font-size: 10px; color: var(--cyan); font-family: var(--ff-mono); margin-right: 6px; cursor: pointer; opacity: 0.8; }
+.msg-reply-badge:hover { opacity: 1; text-decoration: underline; }
 
 /* Stats */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
@@ -814,6 +824,10 @@ p, .msg-text { text-wrap: pretty; }
         </div>
         <div class="messages-container" id="messagesList"></div>
       </div>
+      <div id="replyPreview" class="reply-preview">
+        <span id="replyPreviewText"></span>
+        <span class="reply-cancel" onclick="cancelReply()">&times;</span>
+      </div>
       <div class="msg-compose">
         <input class="msg-compose-input" id="msgComposeInput" type="text" placeholder="Send a message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();composeSend()}">
         <button class="btn btn-primary btn-sm" onclick="composeSend()">SEND</button>
@@ -1150,7 +1164,7 @@ const i18n = {
     // messages
     search_messages: 'search messages...', no_messages: 'NO MESSAGES RECORDED', no_results: 'NO RESULTS',
     load_older: 'LOAD OLDER', send_placeholder: 'Send a message...', send: 'SEND',
-    pin: 'PIN', del: 'DEL', ban: 'BAN', unban: 'UNBAN', deleted: 'deleted',
+    pin: 'PIN', del: 'DEL', ban: 'BAN', unban: 'UNBAN', deleted: 'deleted', reply: 'REPLY', replying_to: 'Replying to',
     confirm_delete_msg: 'Delete this message?', confirm_ban: 'Ban this user?', confirm_unban: 'Unban this user?',
     msg_sent: 'Message sent', pinned: 'Pinned', msg_deleted: 'Deleted',
     user_banned: 'User banned', user_unbanned: 'User unbanned',
@@ -1283,7 +1297,7 @@ const i18n = {
     // messages
     search_messages: '\u043f\u043e\u0438\u0441\u043a \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439...', no_messages: '\u041d\u0415\u0422 \u0421\u041e\u041e\u0411\u0429\u0415\u041d\u0418\u0419', no_results: '\u041d\u0418\u0427\u0415\u0413\u041e \u041d\u0415 \u041d\u0410\u0419\u0414\u0415\u041d\u041e',
     load_older: '\u0417\u0410\u0413\u0420\u0423\u0417\u0418\u0422\u042c \u0420\u0410\u041d\u041d\u0418\u0415', send_placeholder: '\u041d\u0430\u043f\u0438\u0448\u0438\u0442\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435...', send: '\u041e\u0422\u041f\u0420\u0410\u0412\u0418\u0422\u042c',
-    pin: '\u0417\u0410\u041a\u0420.', del: '\u0423\u0414\u0410\u041b.', ban: '\u0411\u0410\u041d', unban: '\u0420\u0410\u0417\u0411\u0410\u041d', deleted: '\u0443\u0434\u0430\u043b\u0435\u043d\u043e',
+    pin: '\u0417\u0410\u041a\u0420.', del: '\u0423\u0414\u0410\u041b.', ban: '\u0411\u0410\u041d', unban: '\u0420\u0410\u0417\u0411\u0410\u041d', deleted: '\u0443\u0434\u0430\u043b\u0435\u043d\u043e', reply: '\u041e\u0422\u0412\u0415\u0422', replying_to: '\u041e\u0442\u0432\u0435\u0442 \u043d\u0430',
     confirm_delete_msg: '\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u044d\u0442\u043e \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435?', confirm_ban: '\u0417\u0430\u0431\u0430\u043d\u0438\u0442\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f?', confirm_unban: '\u0420\u0430\u0437\u0431\u0430\u043d\u0438\u0442\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f?',
     msg_sent: '\u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043e', pinned: '\u0417\u0430\u043a\u0440\u0435\u043f\u043b\u0435\u043d\u043e', msg_deleted: '\u0423\u0434\u0430\u043b\u0435\u043d\u043e',
     user_banned: '\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u0437\u0430\u0431\u0430\u043d\u0435\u043d', user_unbanned: '\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u0440\u0430\u0437\u0431\u0430\u043d\u0435\u043d',
@@ -1673,7 +1687,7 @@ function renderMsgContent(m) {
     const mediaUrl = `/api/media?file_id=${encodeURIComponent(m.file_id)}${botParam}`;
     if (m.media_type === 'photo' || m.media_type === 'sticker') {
       html += `<div class="msg-media msg-media-img">
-        <img src="${mediaUrl}" alt="${label}" loading="lazy" onclick="window.open(this.src,'_blank')">
+        <img src="${mediaUrl}" alt="${label}" loading="lazy" onclick="openLightbox(this.src)">
       </div>`;
     } else if (m.media_type === 'video' || m.media_type === 'animation' || m.media_type === 'video_note') {
       html += `<div class="msg-media msg-media-video">
@@ -2172,13 +2186,17 @@ async function loadMessages(append = false) {
     const msgs = await api(`/api/messages?chat_id=${currentChat.id}&limit=50&offset=${messageOffset}`);
     const list = document.getElementById('messagesList');
     const reversed = [...msgs].reverse();
+    const msgMap = {};
+    reversed.forEach(m => { msgMap[m.id] = m; });
     const html = reversed.map(m => `
-      <div class="msg-row ${m.deleted ? 'msg-deleted' : ''}">
+      <div class="msg-row ${m.deleted ? 'msg-deleted' : ''}" id="msg-${m.id}">
+        ${m.reply_to_id ? `<span class="msg-reply-badge" onclick="scrollToMsg(${m.reply_to_id})">↩ ${t('replying_to')} ${msgMap[m.reply_to_id] ? esc(msgMap[m.reply_to_id].from_user) : '#' + m.reply_to_id}</span>` : ''}
         <span class="msg-user" title="ID: ${m.from_id}">${esc(m.from_user)}</span>
         <span class="msg-text">${renderMsgContent(m)}</span>
         ${m.deleted ? `<span class="msg-deleted-badge">${t('deleted')}</span>` : ''}
         <span class="msg-time">${m.date_str}</span>
         <div class="msg-actions">
+          ${!m.deleted ? `<button class="btn btn-sm" onclick="setReply(${m.id}, '${esc(m.from_user).replace(/'/g, "\\'")}')">${t('reply')}</button>` : ''}
           ${currentChat.is_admin && !m.deleted ? `
             <button class="btn btn-sm" onclick="pinMsg(${m.id})">${t('pin')}</button>
             <button class="btn btn-danger btn-sm" onclick="deleteMsg(${m.id})">${t('del')}</button>
@@ -2220,16 +2238,39 @@ async function doSearch() {
 
 // ===== ACTIONS =====
 
+let replyToMsgID = null;
+
+function setReply(msgID, fromUser) {
+  replyToMsgID = msgID;
+  const preview = document.getElementById('replyPreview');
+  document.getElementById('replyPreviewText').textContent = `${t('replying_to')} ${fromUser} (#${msgID})`;
+  preview.classList.add('active');
+  document.getElementById('msgComposeInput').focus();
+}
+
+function scrollToMsg(msgID) {
+  const el = document.getElementById('msg-' + msgID);
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.background = 'var(--cyan-dim)'; setTimeout(() => el.style.background = '', 1500); }
+}
+
+function cancelReply() {
+  replyToMsgID = null;
+  document.getElementById('replyPreview').classList.remove('active');
+}
+
 async function composeSend() {
   const input = document.getElementById('msgComposeInput');
   const text = input.value.trim();
   if (!text || !currentChat || !currentBotID) return;
   try {
+    const body = { bot_id: currentBotID, chat_id: currentChat.id, text };
+    if (replyToMsgID) body.reply_to_message_id = replyToMsgID;
     await api('/api/messages/send', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ bot_id: currentBotID, chat_id: currentChat.id, text })
+      body: JSON.stringify(body)
     });
     input.value = '';
+    cancelReply();
     toast(t('msg_sent'));
     setTimeout(() => loadMessages(), 500);
   } catch(e) { toast(e.message, 'error'); }
@@ -2705,6 +2746,21 @@ async function deleteCurrentBot() {
 }
 
 init();
+
+function openLightbox(src) {
+  const lb = document.getElementById('mediaLightbox');
+  lb.querySelector('img').src = src;
+  lb.classList.add('active');
+}
+function closeLightbox() {
+  const lb = document.getElementById('mediaLightbox');
+  lb.classList.remove('active');
+  lb.querySelector('img').src = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 </script>
+<div id="mediaLightbox" class="media-lightbox" onclick="closeLightbox()">
+  <img src="" alt="">
+</div>
 </body>
 </html>

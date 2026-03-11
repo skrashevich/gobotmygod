@@ -379,9 +379,10 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		BotID  int64  `json:"bot_id"`
-		ChatID int64  `json:"chat_id"`
-		Text   string `json:"text"`
+		BotID            int64  `json:"bot_id"`
+		ChatID           int64  `json:"chat_id"`
+		Text             string `json:"text"`
+		ReplyToMessageID int    `json:"reply_to_message_id,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, err)
@@ -392,9 +393,16 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 		writeError(w, fmt.Errorf("bot not found"))
 		return
 	}
-	if err := bot.SendMessage(req.ChatID, req.Text); err != nil {
-		writeError(w, err)
-		return
+	if req.ReplyToMessageID > 0 {
+		if _, err := bot.SendMessageReply(req.ChatID, req.Text, req.ReplyToMessageID); err != nil {
+			writeError(w, err)
+			return
+		}
+	} else {
+		if err := bot.SendMessage(req.ChatID, req.Text); err != nil {
+			writeError(w, err)
+			return
+		}
 	}
 	writeJSON(w, map[string]string{"status": "ok"})
 }
