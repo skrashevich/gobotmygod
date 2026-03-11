@@ -1685,9 +1685,13 @@ function renderMsgContent(m) {
     const label = ml[m.media_type] || m.media_type;
     const botParam = currentBot ? `&bot_id=${currentBot.id}` : '';
     const mediaUrl = `/api/media?file_id=${encodeURIComponent(m.file_id)}${botParam}`;
-    if (m.media_type === 'photo' || m.media_type === 'sticker') {
+    if (m.media_type === 'photo') {
       html += `<div class="msg-media msg-media-img">
         <img src="${mediaUrl}" alt="${label}" loading="lazy" onclick="openLightbox(this.src)">
+      </div>`;
+    } else if (m.media_type === 'sticker') {
+      html += `<div class="msg-media msg-media-img">
+        <img src="${mediaUrl}" alt="${label}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\\'msg-media-badge\\'>${icon} ${label}</span>'">
       </div>`;
     } else if (m.media_type === 'video' || m.media_type === 'animation' || m.media_type === 'video_note') {
       html += `<div class="msg-media msg-media-video">

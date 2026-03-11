@@ -143,7 +143,11 @@ func extractMedia(msg *tgbotapi.Message) (mediaType, fileID string) {
 		fileID = msg.Animation.FileID
 	case msg.Sticker != nil:
 		mediaType = "sticker"
-		fileID = msg.Sticker.FileID
+		if msg.Sticker.Thumbnail != nil {
+			fileID = msg.Sticker.Thumbnail.FileID
+		} else {
+			fileID = msg.Sticker.FileID
+		}
 	case msg.Voice != nil:
 		mediaType = "voice"
 		fileID = msg.Voice.FileID
