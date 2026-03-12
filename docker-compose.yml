@@ -1,6 +1,6 @@
 services:
   botmux:
-    build: .
+    image: ghcr.io/skrashevich/botmux:main
     container_name: botmux
     restart: unless-stopped
     ports:

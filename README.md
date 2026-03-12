@@ -157,18 +157,21 @@ go install github.com/skrashevich/botmux@latest
 ### Docker
 
 ```bash
-# Build and run with docker compose
+# Run with docker compose (pulls from GitHub Container Registry)
 TELEGRAM_BOT_TOKEN="YOUR_TOKEN" docker compose up -d
-
-# Or build the image manually (multi-arch supported)
-docker build -t botmux .
-docker run -d -p 8080:8080 -v botmux-data:/data \
-  -e TELEGRAM_BOT_TOKEN="YOUR_TOKEN" botmux
 ```
 
-Multi-architecture build (amd64, arm64):
+Or run the image directly:
 
 ```bash
+docker run -d -p 8080:8080 -v botmux-data:/data \
+  -e TELEGRAM_BOT_TOKEN="YOUR_TOKEN" ghcr.io/skrashevich/botmux:main
+```
+
+To build locally (multi-arch supported):
+
+```bash
+docker build -t botmux .
 docker buildx build --platform linux/amd64,linux/arm64 -t botmux .
 ```
 

@@ -73,8 +73,8 @@
     },
     {
       "path": "README.md",
-      "accessCount": 12,
-      "lastAccessed": 1773261795349,
+      "accessCount": 13,
+      "lastAccessed": 1773293002385,
       "type": "file"
     },
     {
@@ -96,6 +96,12 @@
       "type": "directory"
     },
     {
+      "path": "docker-compose.yml",
+      "accessCount": 4,
+      "lastAccessed": 1773292993825,
+      "type": "file"
+    },
+    {
       "path": "go.mod",
       "accessCount": 2,
       "lastAccessed": 1773261690029,
@@ -105,12 +111,6 @@
       "path": "Dockerfile",
       "accessCount": 2,
       "lastAccessed": 1773261690524,
-      "type": "file"
-    },
-    {
-      "path": "docker-compose.yml",
-      "accessCount": 2,
-      "lastAccessed": 1773261695203,
       "type": "file"
     },
     {
