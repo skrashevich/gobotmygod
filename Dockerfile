@@ -23,7 +23,7 @@ RUN apk add --no-cache ca-certificates tzdata
 COPY --from=builder /botmux /usr/local/bin/botmux
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget -qO- http://localhost:8080/api/bots || exit 1
+    CMD wget -qO- http://localhost:8080/api/health || exit 1
 
 VOLUME /data
 EXPOSE 8080
