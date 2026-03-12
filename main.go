@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"log"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // telegramAPIURL is the base URL for Telegram Bot API requests.
@@ -31,6 +33,7 @@ func main() {
 	dbPath := flag.String("db", "botdata.db", "SQLite database path")
 	webhookURL := flag.String("webhook", "", "Set webhook URL for the CLI bot (requires -token)")
 	tgAPI := flag.String("tg-api", "", "Custom Telegram API base URL (default: https://api.telegram.org)")
+	demoMode := flag.Bool("demo", false, "Enable demo mode with ephemeral per-session databases")
 	flag.Parse()
 
 	if *token == "" {
@@ -45,6 +48,28 @@ func main() {
 		log.Printf("Using custom Telegram API: %s", telegramAPIURL)
 	}
 
+	if !*demoMode && os.Getenv("DEMO_MODE") == "true" {
+		*demoMode = true
+	}
+
+	// Demo mode: per-session isolated databases, fake Telegram API
+	if *demoMode {
+		telegramAPIURL = "https://telegram-bot-api.exe.xyz"
+		log.Printf("Demo mode enabled. Telegram API: %s", telegramAPIURL)
+		log.Printf("Login with demo:demo. Sessions expire after 30 minutes of inactivity.")
+
+		dm := NewDemoManager()
+		dm.StartReaper(30 * time.Minute)
+		defer dm.StopAll()
+
+		log.Printf("Web interface at http://%s", *addr)
+		if err := http.ListenAndServe(*addr, dm); err != nil {
+			log.Fatalf("Server failed: %v", err)
+		}
+		return
+	}
+
+	// Normal mode
 	store, err := NewStore(*dbPath)
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)

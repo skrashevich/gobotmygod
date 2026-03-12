@@ -328,6 +328,8 @@ export TELEGRAM_BOT_TOKEN="123456:ABC-DEF..."
 | `-addr` | `:8080` | HTTP server listen address |
 | `-db` | `botdata.db` | Path to SQLite database file |
 | `-webhook` | `""` | Set webhook URL for receiving updates (instead of polling) |
+| `-tg-api` | `""` | Custom Telegram API base URL (or `TELEGRAM_API_URL` env var) |
+| `-demo` | `false` | Enable demo mode (or `DEMO_MODE=true` env var) |
 
 ### Webhook mode
 
@@ -342,6 +344,35 @@ Registers a webhook with Telegram. Updates are delivered via `POST /tghook` to y
 The webhook endpoint is served on the same HTTP server as the web UI. If you need HTTPS, put a reverse proxy (nginx, caddy) in front.
 
 **Note:** Webhook mode supports reverse proxy — updates received via webhook are also forwarded to the backend URL if proxy mode is enabled for the bot.
+
+### Demo mode
+
+Demo mode creates isolated per-session environments for public demonstrations. Each browser session gets its own temporary database with pre-configured bots.
+
+```bash
+# Via flag
+./botmux -demo
+
+# Via environment variable
+DEMO_MODE=true ./botmux
+
+# Docker
+docker run -e DEMO_MODE=true -p 8080:8080 botmux
+```
+
+- Login: `demo` / `demo` (no password change required)
+- Each session gets 3 pre-configured demo bots
+- Uses a fake Telegram API (`telegram-bot-api.exe.xyz`) — no real bot tokens needed
+- Sessions expire after 30 minutes of inactivity
+- Temporary databases are cleaned up automatically on browser close or expiration
+
+### Custom Telegram API server
+
+Use `-tg-api` flag or `TELEGRAM_API_URL` env var to point botmux at a custom Telegram Bot API server (e.g., [tdlib/telegram-bot-api](https://github.com/tdlib/telegram-bot-api)):
+
+```bash
+./botmux -token "TOKEN" -tg-api "http://localhost:8081"
+```
 
 ## Adding Bots
 

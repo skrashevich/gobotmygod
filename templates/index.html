@@ -3590,6 +3590,11 @@ function closeLightbox() {
   lb.querySelector('img').src = '';
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// Demo mode: cleanup session on browser close
+window.addEventListener('beforeunload', () => {
+  navigator.sendBeacon('/api/demo/cleanup');
+});
 </script>
 <!-- User Management Modal (admin only) -->
 <div id="usersModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeUsersModal()">

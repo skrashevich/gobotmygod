@@ -78,7 +78,9 @@ func (s *Server) SetWebhookHandler(path string, handler http.HandlerFunc) {
 	s.webhookHandler = handler
 }
 
-func (s *Server) Start(addr string) error {
+// BuildMux creates the HTTP multiplexer with all routes registered.
+// Separated from Start() so demo mode can create per-session muxes.
+func (s *Server) BuildMux() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	if s.webhookPath != "" && s.webhookHandler != nil {
@@ -186,6 +188,11 @@ func (s *Server) Start(addr string) error {
 	mux.HandleFunc("/api/tags/remove", s.authMiddleware(s.handleRemoveTag))
 	mux.HandleFunc("/api/tags/user", s.authMiddleware(s.handleGetUserTags))
 
+	return mux
+}
+
+func (s *Server) Start(addr string) error {
+	mux := s.BuildMux()
 	log.Printf("Web interface at http://%s", addr)
 	return http.ListenAndServe(addr, mux)
 }
