@@ -30,6 +30,7 @@ type Server struct {
 	bots           map[int64]*Bot // botID -> Bot (for Telegram API calls)
 	webhookPath    string
 	webhookHandler http.HandlerFunc
+	demoMode       bool
 }
 
 func NewServer(store *Store, proxy *ProxyManager) *Server {
@@ -93,7 +94,11 @@ func (s *Server) BuildMux() *http.ServeMux {
 
 	// Health check — no auth
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, map[string]string{"status": "ok"})
+		resp := map[string]string{"status": "ok"}
+		if s.demoMode {
+			resp["mode"] = "demo"
+		}
+		writeJSON(w, resp)
 	})
 
 	// Auth endpoints — no auth required

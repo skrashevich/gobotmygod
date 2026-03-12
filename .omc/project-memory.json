@@ -67,14 +67,14 @@
   "hotPaths": [
     {
       "path": "templates/index.html",
-      "accessCount": 175,
-      "lastAccessed": 1773315132839,
+      "accessCount": 187,
+      "lastAccessed": 1773316202368,
       "type": "directory"
     },
     {
       "path": "server.go",
-      "accessCount": 148,
-      "lastAccessed": 1773315089277,
+      "accessCount": 152,
+      "lastAccessed": 1773316151767,
       "type": "directory"
     },
     {
@@ -97,8 +97,14 @@
     },
     {
       "path": "bridge.go",
-      "accessCount": 22,
-      "lastAccessed": 1773311214404,
+      "accessCount": 28,
+      "lastAccessed": 1773316013238,
+      "type": "file"
+    },
+    {
+      "path": "main.go",
+      "accessCount": 25,
+      "lastAccessed": 1773316226770,
       "type": "file"
     },
     {
@@ -106,12 +112,6 @@
       "accessCount": 19,
       "lastAccessed": 1773310970681,
       "type": "directory"
-    },
-    {
-      "path": "main.go",
-      "accessCount": 17,
-      "lastAccessed": 1773311341779,
-      "type": "file"
     },
     {
       "path": "proxy.go",
@@ -156,6 +156,12 @@
       "type": "file"
     },
     {
+      "path": "demo.go",
+      "accessCount": 4,
+      "lastAccessed": 1773316129744,
+      "type": "file"
+    },
+    {
       "path": "go.mod",
       "accessCount": 3,
       "lastAccessed": 1773293995379,
@@ -189,12 +195,6 @@
       "path": "screenshots/11-user-management.png",
       "accessCount": 2,
       "lastAccessed": 1773300456317,
-      "type": "file"
-    },
-    {
-      "path": "demo.go",
-      "accessCount": 2,
-      "lastAccessed": 1773311318300,
       "type": "file"
     },
     {
