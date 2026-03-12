@@ -79,8 +79,8 @@
     },
     {
       "path": "server.go",
-      "accessCount": 10,
-      "lastAccessed": 1773242219141,
+      "accessCount": 11,
+      "lastAccessed": 1773293361031,
       "type": "directory"
     },
     {
@@ -102,15 +102,15 @@
       "type": "file"
     },
     {
-      "path": "go.mod",
-      "accessCount": 2,
-      "lastAccessed": 1773261690029,
+      "path": "Dockerfile",
+      "accessCount": 4,
+      "lastAccessed": 1773293366915,
       "type": "file"
     },
     {
-      "path": "Dockerfile",
+      "path": "go.mod",
       "accessCount": 2,
-      "lastAccessed": 1773261690524,
+      "lastAccessed": 1773261690029,
       "type": "file"
     },
     {
