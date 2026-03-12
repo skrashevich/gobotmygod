@@ -40,6 +40,9 @@ type Chat struct {
 	Description string `json:"description"`
 	IsAdmin     bool   `json:"is_admin"`
 	UpdatedAt   string `json:"updated_at"`
+	LastMsgText string `json:"last_msg_text,omitempty"`
+	LastMsgFrom string `json:"last_msg_from,omitempty"`
+	LastMsgDate int64  `json:"last_msg_date,omitempty"`
 }
 
 type Message struct {
@@ -557,7 +560,16 @@ func (s *Store) UpsertChat(botID int64, c Chat) error {
 }
 
 func (s *Store) GetChats(botID int64) ([]Chat, error) {
-	rows, err := s.db.Query(`SELECT id, type, title, username, member_count, description, is_admin, updated_at FROM chats WHERE bot_id=? ORDER BY title`, botID)
+	rows, err := s.db.Query(`
+		SELECT c.id, c.type, c.title, c.username, c.member_count, c.description, c.is_admin, c.updated_at,
+			COALESCE(m.text, ''), COALESCE(m.from_user, ''), COALESCE(m.date, 0)
+		FROM chats c
+		LEFT JOIN messages m ON m.chat_id = c.id AND m.id = (
+			SELECT id FROM messages WHERE chat_id = c.id ORDER BY date DESC LIMIT 1
+		)
+		WHERE c.bot_id=?
+		ORDER BY CASE WHEN m.date IS NOT NULL THEN m.date ELSE 0 END DESC, c.title
+	`, botID)
 	if err != nil {
 		return nil, err
 	}
@@ -566,7 +578,8 @@ func (s *Store) GetChats(botID int64) ([]Chat, error) {
 	var chats []Chat
 	for rows.Next() {
 		var c Chat
-		if err := rows.Scan(&c.ID, &c.Type, &c.Title, &c.Username, &c.MemberCount, &c.Description, &c.IsAdmin, &c.UpdatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.Type, &c.Title, &c.Username, &c.MemberCount, &c.Description, &c.IsAdmin, &c.UpdatedAt,
+			&c.LastMsgText, &c.LastMsgFrom, &c.LastMsgDate); err != nil {
 			return nil, err
 		}
 		chats = append(chats, c)

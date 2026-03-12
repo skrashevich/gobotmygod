@@ -192,6 +192,22 @@ body::before {
   margin-top: 5px;
   display: flex; align-items: center; gap: 8px;
 }
+.chat-header-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+}
+.chat-last-time {
+  font-family: var(--ff-mono);
+  font-size: 10px; color: var(--text3);
+  white-space: nowrap; flex-shrink: 0;
+}
+.chat-preview {
+  font-size: 12px; color: var(--text3);
+  margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chat-preview-from {
+  color: var(--text2); font-weight: 500;
+}
 
 .badge {
   display: inline-block;
@@ -273,6 +289,11 @@ body::before {
   display: flex; gap: 12px; padding: 8px 14px;
   border-left: 2px solid transparent;
   transition: all 0.1s; position: relative;
+  flex-wrap: wrap;
+}
+.msg-row .msg-reply-badge {
+  flex-basis: 100%; margin-bottom: 2px;
+  padding-left: 152px;
 }
 .msg-row:hover { background: var(--surface); border-left-color: var(--cyan-dim); }
 .msg-user { font-family: var(--ff-mono); font-size: 12px; font-weight: 500; color: var(--cyan); min-width: 140px; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1668,6 +1689,18 @@ function esc(s) {
   return d.innerHTML;
 }
 
+function formatChatTime(ts) {
+  const d = new Date(ts * 1000);
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if (d.toDateString() === now.toDateString()) return time;
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return currentLang === 'ru' ? 'Вчера' : 'Yesterday';
+  if (now.getFullYear() === d.getFullYear()) return `${pad(d.getDate())}.${pad(d.getMonth()+1)}`;
+  return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
+}
+
 // ===== i18n =====
 
 const i18n = {
@@ -2360,7 +2393,7 @@ async function init() {
       const activeTab = document.querySelector('.tab.active');
       if (!activeTab) return;
       const tab = activeTab.dataset.tab;
-      if (tab === 'messages' && !document.getElementById('searchInput')?.value.trim()) loadMessages();
+      if (tab === 'messages' && !document.getElementById('searchInput')?.value.trim()) loadMessages(false, true);
       else if (tab === 'stats') loadStats();
       else if (tab === 'users') loadUsers();
       else if (tab === 'adminlog') loadAdminLog();
@@ -2906,9 +2939,16 @@ async function loadChats() {
 function renderChatList(chats) {
   const list = document.getElementById('chatList');
   const prevActive = currentChat?.id;
-  list.innerHTML = chats.map(c => `
+  list.innerHTML = chats.map(c => {
+    const preview = c.last_msg_text ? esc(c.last_msg_text).substring(0, 50) : '';
+    const from = c.last_msg_from ? esc(c.last_msg_from) : '';
+    const time = c.last_msg_date ? formatChatTime(c.last_msg_date) : '';
+    return `
     <div class="chat-item ${c.id === prevActive ? 'active' : ''}" onclick="selectChat(${c.id})">
-      <div class="chat-title">${esc(c.title || 'Private: ' + c.id)}</div>
+      <div class="chat-header-row">
+        <div class="chat-title">${esc(c.title || 'Private: ' + c.id)}</div>
+        ${time ? `<span class="chat-last-time">${time}</span>` : ''}
+      </div>
       <div class="chat-meta">
         <span class="badge ${c.type === 'channel' ? 'badge-channel' : 'badge-group'}">
           ${c.type === 'channel' ? 'CH' : c.type === 'supergroup' ? 'SG' : 'GR'}
@@ -2916,8 +2956,9 @@ function renderChatList(chats) {
         ${c.is_admin ? '<span class="badge badge-admin">ADM</span>' : ''}
         <span>${c.member_count}</span>
       </div>
-    </div>
-  `).join('');
+      ${preview ? `<div class="chat-preview"><span class="chat-preview-from">${from}:</span> ${preview}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 async function selectChat(chatID) {
@@ -2957,12 +2998,15 @@ function switchTab(tab) {
 
 // ===== MESSAGES =====
 
-async function loadMessages(append = false) {
+async function loadMessages(append = false, preserveScroll = false) {
   if (!currentChat) return;
   if (!append) messageOffset = 0;
   try {
     const msgs = await api(`/api/messages?chat_id=${currentChat.id}&limit=50&offset=${messageOffset}`);
     const list = document.getElementById('messagesList');
+    const content = document.getElementById('messagesContent');
+    const prevScrollTop = content.scrollTop;
+    const prevScrollHeight = content.scrollHeight;
     const reversed = [...msgs].reverse();
     const msgMap = {};
     reversed.forEach(m => { msgMap[m.id] = m; });
@@ -2986,8 +3030,9 @@ async function loadMessages(append = false) {
     if (append) list.innerHTML = html + list.innerHTML;
     else list.innerHTML = html || `<div style="text-align:center;color:var(--text3);padding:40px;font-family:var(--ff-mono);font-size:12px">${t('no_messages')}</div>`;
     document.getElementById('loadMoreBtn').style.display = msgs.length >= 50 ? 'inline-flex' : 'none';
-    if (!append) {
-      const content = document.getElementById('messagesContent');
+    if (preserveScroll) {
+      content.scrollTop = prevScrollTop + (content.scrollHeight - prevScrollHeight);
+    } else if (!append) {
       content.scrollTop = content.scrollHeight;
     }
   } catch(e) { toast(e.message, 'error'); }
