@@ -184,6 +184,15 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 // Bot management handlers
 
+// handleBotList returns the list of bots accessible to the current user.
+// @Summary List bots
+// @Description Returns all bots for admin users, or only assigned bots for regular users. Each entry includes a running status flag.
+// @Tags bots
+// @Produce json
+// @Success 200 {array} BotConfig
+// @Failure 500 {object} map[string]string
+// @Router /api/bots [get]
+// @Security CookieAuth
 func (s *Server) handleBotList(w http.ResponseWriter, r *http.Request) {
 	user := getAuthUser(r)
 	var bots []BotConfig
@@ -214,6 +223,18 @@ func (s *Server) handleBotList(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, result)
 }
 
+// handleBotAdd registers a new bot in the database and starts it.
+// @Summary Add bot
+// @Description Creates a new bot configuration. Deletes any existing webhook before starting polling. Admin only.
+// @Tags bots
+// @Accept json
+// @Produce json
+// @Param bot body BotConfig true "Bot configuration"
+// @Success 200 {object} map[string]interface{}
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/bots/add [post]
+// @Security CookieAuth
 func (s *Server) handleBotAdd(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -258,6 +279,18 @@ func (s *Server) handleBotAdd(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]interface{}{"status": "ok", "id": id})
 }
 
+// handleBotUpdate updates an existing bot configuration and restarts it.
+// @Summary Update bot
+// @Description Updates bot settings. Preserves the source field from the existing record. Admin only.
+// @Tags bots
+// @Accept json
+// @Produce json
+// @Param bot body BotConfig true "Bot configuration (must include id)"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/bots/update [post]
+// @Security CookieAuth
 func (s *Server) handleBotUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -290,6 +323,17 @@ func (s *Server) handleBotUpdate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleBotDelete stops and removes a bot from the database.
+// @Summary Delete bot
+// @Description Stops the bot, unregisters it from the proxy manager, and deletes its DB record. Admin only.
+// @Tags bots
+// @Produce json
+// @Param id query int true "Bot ID"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/bots/delete [post]
+// @Security CookieAuth
 func (s *Server) handleBotDelete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -306,6 +350,16 @@ func (s *Server) handleBotDelete(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleBotValidate validates a Telegram bot token and returns the bot username.
+// @Summary Validate bot token
+// @Description Calls Telegram API to verify the token and returns the associated bot username. Admin only.
+// @Tags bots
+// @Produce json
+// @Param token query string true "Telegram bot token"
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/bots/validate [get]
+// @Security CookieAuth
 func (s *Server) handleBotValidate(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	username, err := s.proxy.ValidateToken(token)
@@ -316,6 +370,16 @@ func (s *Server) handleBotValidate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"username": username})
 }
 
+// handleBotHealth checks and stores the backend health status for a bot.
+// @Summary Check bot backend health
+// @Description Performs a health check against the bot's configured backend URL and stores the result.
+// @Tags bots
+// @Produce json
+// @Param id query int true "Bot ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/bots/health [get]
+// @Security CookieAuth
 func (s *Server) handleBotHealth(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
 	status, err := s.proxy.CheckAndStoreHealth(id)
@@ -328,6 +392,16 @@ func (s *Server) handleBotHealth(w http.ResponseWriter, r *http.Request) {
 
 // Chat handlers
 
+// handleChats returns all chats tracked by a given bot.
+// @Summary List chats
+// @Description Returns all chats stored in the database for the specified bot.
+// @Tags chats
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Success 200 {array} Chat
+// @Failure 500 {object} map[string]string
+// @Router /api/chats [get]
+// @Security CookieAuth
 func (s *Server) handleChats(w http.ResponseWriter, r *http.Request) {
 	botID, _ := strconv.ParseInt(r.URL.Query().Get("bot_id"), 10, 64)
 	chats, err := s.store.GetChats(botID)
@@ -341,6 +415,17 @@ func (s *Server) handleChats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, chats)
 }
 
+// handleRefreshChat fetches fresh chat metadata from Telegram and updates the database.
+// @Summary Refresh chat info
+// @Description Calls Telegram API to refresh the chat's title, member count, and other metadata.
+// @Tags chats
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param chat_id query int true "Chat ID"
+// @Success 200 {object} Chat
+// @Failure 500 {object} map[string]string
+// @Router /api/chats/refresh [get]
+// @Security CookieAuth
 func (s *Server) handleRefreshChat(w http.ResponseWriter, r *http.Request) {
 	bot, _, err := s.getBotFromRequest(r)
 	if err != nil {
@@ -360,6 +445,18 @@ func (s *Server) handleRefreshChat(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, chat)
 }
 
+// handleDeleteChat removes a chat and all its messages from the database.
+// @Summary Delete chat
+// @Description Deletes the chat record (and associated messages) from the local database. Does not leave the Telegram chat.
+// @Tags chats
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param chat_id query int true "Chat ID"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/chats/delete [post]
+// @Security CookieAuth
 func (s *Server) handleDeleteChat(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -376,6 +473,18 @@ func (s *Server) handleDeleteChat(w http.ResponseWriter, r *http.Request) {
 
 // Message handlers
 
+// handleMessages returns paginated messages for a chat.
+// @Summary List messages
+// @Description Returns stored messages for the given chat with pagination support (default limit 50).
+// @Tags messages
+// @Produce json
+// @Param chat_id query int true "Chat ID"
+// @Param limit query int false "Max number of messages to return (default 50)"
+// @Param offset query int false "Number of messages to skip"
+// @Success 200 {array} Message
+// @Failure 500 {object} map[string]string
+// @Router /api/messages [get]
+// @Security CookieAuth
 func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
 	chatID, _ := strconv.ParseInt(r.URL.Query().Get("chat_id"), 10, 64)
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
@@ -394,6 +503,17 @@ func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, msgs)
 }
 
+// handleSearchMessages performs a full-text search over messages in a chat.
+// @Summary Search messages
+// @Description Searches stored messages in the given chat by text query. Returns up to 50 results.
+// @Tags messages
+// @Produce json
+// @Param chat_id query int true "Chat ID"
+// @Param q query string true "Search query"
+// @Success 200 {array} Message
+// @Failure 500 {object} map[string]string
+// @Router /api/messages/search [get]
+// @Security CookieAuth
 func (s *Server) handleSearchMessages(w http.ResponseWriter, r *http.Request) {
 	chatID, _ := strconv.ParseInt(r.URL.Query().Get("chat_id"), 10, 64)
 	query := r.URL.Query().Get("q")
@@ -408,6 +528,18 @@ func (s *Server) handleSearchMessages(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, msgs)
 }
 
+// handleSendMessage sends a text message to a Telegram chat via the specified bot.
+// @Summary Send message
+// @Description Sends a text message (optionally as a reply) to the given chat using the specified bot.
+// @Tags messages
+// @Accept json
+// @Produce json
+// @Param body body object true "Send request" SchemaExample({"bot_id":1,"chat_id":-1001234567890,"text":"Hello","reply_to_message_id":0})
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/messages/send [post]
+// @Security CookieAuth
 func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -442,6 +574,19 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handlePinMessage pins a message in a Telegram chat.
+// @Summary Pin message
+// @Description Pins the specified message in the chat and logs the action to the admin log.
+// @Tags messages
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param chat_id query int true "Chat ID"
+// @Param message_id query int true "Message ID to pin"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/messages/pin [post]
+// @Security CookieAuth
 func (s *Server) handlePinMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -465,6 +610,19 @@ func (s *Server) handlePinMessage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleUnpinMessage unpins a message in a Telegram chat.
+// @Summary Unpin message
+// @Description Unpins the specified message in the chat.
+// @Tags messages
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param chat_id query int true "Chat ID"
+// @Param message_id query int true "Message ID to unpin"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/messages/unpin [post]
+// @Security CookieAuth
 func (s *Server) handleUnpinMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -484,6 +642,19 @@ func (s *Server) handleUnpinMessage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleDeleteMessage deletes a message from Telegram and marks it deleted in the database.
+// @Summary Delete message
+// @Description Deletes the specified message from the Telegram chat and marks it as deleted in the local store. Logs the action.
+// @Tags messages
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param chat_id query int true "Chat ID"
+// @Param message_id query int true "Message ID to delete"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/messages/delete [post]
+// @Security CookieAuth
 func (s *Server) handleDeleteMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -508,6 +679,16 @@ func (s *Server) handleDeleteMessage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleStats returns message statistics for a chat.
+// @Summary Get chat statistics
+// @Description Returns total messages, today's messages, active users, top users, and hourly stats for the specified chat.
+// @Tags stats
+// @Produce json
+// @Param chat_id query int true "Chat ID"
+// @Success 200 {object} ChatStats
+// @Failure 500 {object} map[string]string
+// @Router /api/stats [get]
+// @Security CookieAuth
 func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	chatID, _ := strconv.ParseInt(r.URL.Query().Get("chat_id"), 10, 64)
 	stats, err := s.store.GetChatStats(chatID)
@@ -518,6 +699,19 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, stats)
 }
 
+// handleListUsers returns users seen in a chat with optional search and pagination.
+// @Summary List chat users
+// @Description Returns Telegram users who have sent messages in the given chat. Supports text search and pagination.
+// @Tags users
+// @Produce json
+// @Param chat_id query int true "Chat ID"
+// @Param q query string false "Search query (matches username)"
+// @Param limit query int false "Max results (default 50)"
+// @Param offset query int false "Number of results to skip"
+// @Success 200 {array} ChatUser
+// @Failure 500 {object} map[string]string
+// @Router /api/users/list [get]
+// @Security CookieAuth
 func (s *Server) handleListUsers(w http.ResponseWriter, r *http.Request) {
 	chatID, _ := strconv.ParseInt(r.URL.Query().Get("chat_id"), 10, 64)
 	search := r.URL.Query().Get("q")
@@ -537,6 +731,19 @@ func (s *Server) handleListUsers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, users)
 }
 
+// handleBanUser bans a user from a Telegram chat.
+// @Summary Ban user
+// @Description Bans the specified user from the chat via Telegram API and logs the action.
+// @Tags users
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param chat_id query int true "Chat ID"
+// @Param user_id query int true "Telegram user ID to ban"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/users/ban [post]
+// @Security CookieAuth
 func (s *Server) handleBanUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -560,6 +767,19 @@ func (s *Server) handleBanUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleUnbanUser unbans a user from a Telegram chat.
+// @Summary Unban user
+// @Description Removes the ban for the specified user in the chat via Telegram API and logs the action.
+// @Tags users
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param chat_id query int true "Chat ID"
+// @Param user_id query int true "Telegram user ID to unban"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/users/unban [post]
+// @Security CookieAuth
 func (s *Server) handleUnbanUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -585,6 +805,17 @@ func (s *Server) handleUnbanUser(w http.ResponseWriter, r *http.Request) {
 
 // Admin handlers
 
+// handleGetAdmins returns the list of administrators for a Telegram chat.
+// @Summary Get chat admins
+// @Description Fetches the current admin list for the specified chat from Telegram API.
+// @Tags admins
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param chat_id query int true "Chat ID"
+// @Success 200 {array} AdminInfo
+// @Failure 500 {object} map[string]string
+// @Router /api/admins [get]
+// @Security CookieAuth
 func (s *Server) handleGetAdmins(w http.ResponseWriter, r *http.Request) {
 	bot, _, err := s.getBotFromRequest(r)
 	if err != nil {
@@ -603,6 +834,18 @@ func (s *Server) handleGetAdmins(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, admins)
 }
 
+// handlePromoteAdmin promotes a user to admin with specified permissions.
+// @Summary Promote admin
+// @Description Grants admin rights to a user in the specified chat with the given permission set. Logs the action.
+// @Tags admins
+// @Accept json
+// @Produce json
+// @Param body body object true "Promote request" SchemaExample({"bot_id":1,"chat_id":-1001234567890,"user_id":123456,"perms":{}})
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/admins/promote [post]
+// @Security CookieAuth
 func (s *Server) handlePromoteAdmin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -634,6 +877,19 @@ func (s *Server) handlePromoteAdmin(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleDemoteAdmin removes admin rights from a user in a Telegram chat.
+// @Summary Demote admin
+// @Description Revokes admin status from the specified user. Logs the action.
+// @Tags admins
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param chat_id query int true "Chat ID"
+// @Param user_id query int true "Telegram user ID to demote"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/admins/demote [post]
+// @Security CookieAuth
 func (s *Server) handleDemoteAdmin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -657,6 +913,18 @@ func (s *Server) handleDemoteAdmin(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleSetAdminTitle sets a custom title for an admin in a Telegram chat.
+// @Summary Set admin title
+// @Description Sets the custom title (badge) displayed next to an admin's name in the chat. Logs the action.
+// @Tags admins
+// @Accept json
+// @Produce json
+// @Param body body object true "Set title request" SchemaExample({"bot_id":1,"chat_id":-1001234567890,"user_id":123456,"title":"Moderator"})
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/admins/title [post]
+// @Security CookieAuth
 func (s *Server) handleSetAdminTitle(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -688,6 +956,18 @@ func (s *Server) handleSetAdminTitle(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleAdminLog returns paginated admin action log entries for a chat.
+// @Summary Get admin log
+// @Description Returns the history of admin actions (ban, unban, pin, delete, promote, etc.) for the given chat.
+// @Tags admins
+// @Produce json
+// @Param chat_id query int true "Chat ID"
+// @Param limit query int false "Max results (default 50)"
+// @Param offset query int false "Number of results to skip"
+// @Success 200 {array} AdminLog
+// @Failure 500 {object} map[string]string
+// @Router /api/adminlog [get]
+// @Security CookieAuth
 func (s *Server) handleAdminLog(w http.ResponseWriter, r *http.Request) {
 	chatID, _ := strconv.ParseInt(r.URL.Query().Get("chat_id"), 10, 64)
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
@@ -708,6 +988,16 @@ func (s *Server) handleAdminLog(w http.ResponseWriter, r *http.Request) {
 
 // Tag handlers
 
+// handleGetTags returns all user tags for a chat.
+// @Summary Get tags
+// @Description Returns all user tags assigned within the given chat.
+// @Tags tags
+// @Produce json
+// @Param chat_id query int true "Chat ID"
+// @Success 200 {array} UserTag
+// @Failure 500 {object} map[string]string
+// @Router /api/tags [get]
+// @Security CookieAuth
 func (s *Server) handleGetTags(w http.ResponseWriter, r *http.Request) {
 	chatID, _ := strconv.ParseInt(r.URL.Query().Get("chat_id"), 10, 64)
 	tags, err := s.store.GetUserTags(chatID)
@@ -721,6 +1011,18 @@ func (s *Server) handleGetTags(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, tags)
 }
 
+// handleAddTag adds a tag to a user in a chat.
+// @Summary Add user tag
+// @Description Assigns a colored tag label to a Telegram user within a chat. Logs the action.
+// @Tags tags
+// @Accept json
+// @Produce json
+// @Param body body object true "Tag request" SchemaExample({"bot_id":1,"chat_id":-1001234567890,"user_id":123456,"username":"user","tag":"VIP","color":"#ff0000"})
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/tags/add [post]
+// @Security CookieAuth
 func (s *Server) handleAddTag(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -750,6 +1052,17 @@ func (s *Server) handleAddTag(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleRemoveTag removes a tag by its ID.
+// @Summary Remove user tag
+// @Description Deletes a specific user tag by its database ID.
+// @Tags tags
+// @Produce json
+// @Param id query int true "Tag ID"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/tags/remove [post]
+// @Security CookieAuth
 func (s *Server) handleRemoveTag(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -763,6 +1076,17 @@ func (s *Server) handleRemoveTag(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleGetUserTags returns all tags assigned to a specific user in a chat.
+// @Summary Get tags for a user
+// @Description Returns tags for the given user within the specified chat.
+// @Tags tags
+// @Produce json
+// @Param chat_id query int true "Chat ID"
+// @Param user_id query int true "Telegram user ID"
+// @Success 200 {array} UserTag
+// @Failure 500 {object} map[string]string
+// @Router /api/tags/user [get]
+// @Security CookieAuth
 func (s *Server) handleGetUserTags(w http.ResponseWriter, r *http.Request) {
 	chatID, _ := strconv.ParseInt(r.URL.Query().Get("chat_id"), 10, 64)
 	userID, _ := strconv.ParseInt(r.URL.Query().Get("user_id"), 10, 64)
@@ -779,6 +1103,16 @@ func (s *Server) handleGetUserTags(w http.ResponseWriter, r *http.Request) {
 
 // Route handlers
 
+// handleGetRoutes returns all routing rules for a bot.
+// @Summary List routes
+// @Description Returns all message routing rules associated with the specified source bot.
+// @Tags routes
+// @Produce json
+// @Param bot_id query int true "Source bot ID"
+// @Success 200 {array} Route
+// @Failure 500 {object} map[string]string
+// @Router /api/routes [get]
+// @Security CookieAuth
 func (s *Server) handleGetRoutes(w http.ResponseWriter, r *http.Request) {
 	botID, _ := strconv.ParseInt(r.URL.Query().Get("bot_id"), 10, 64)
 	routes, err := s.store.GetRoutes(botID)
@@ -792,6 +1126,18 @@ func (s *Server) handleGetRoutes(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, routes)
 }
 
+// handleAddRoute creates a new message routing rule.
+// @Summary Add route
+// @Description Creates a routing rule that forwards or copies messages matching conditions from one bot/chat to another. Admin only.
+// @Tags routes
+// @Accept json
+// @Produce json
+// @Param route body Route true "Route definition"
+// @Success 200 {object} map[string]interface{}
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/routes/add [post]
+// @Security CookieAuth
 func (s *Server) handleAddRoute(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -811,6 +1157,18 @@ func (s *Server) handleAddRoute(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]interface{}{"status": "ok", "id": id})
 }
 
+// handleUpdateRoute updates an existing routing rule.
+// @Summary Update route
+// @Description Updates a routing rule by ID. Admin only.
+// @Tags routes
+// @Accept json
+// @Produce json
+// @Param route body Route true "Route definition (must include id)"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/routes/update [post]
+// @Security CookieAuth
 func (s *Server) handleUpdateRoute(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -828,6 +1186,17 @@ func (s *Server) handleUpdateRoute(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleDeleteRoute deletes a routing rule by ID.
+// @Summary Delete route
+// @Description Removes the specified routing rule. Admin only.
+// @Tags routes
+// @Produce json
+// @Param id query int true "Route ID"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/routes/delete [post]
+// @Security CookieAuth
 func (s *Server) handleDeleteRoute(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -843,6 +1212,14 @@ func (s *Server) handleDeleteRoute(w http.ResponseWriter, r *http.Request) {
 
 // LLM config handlers
 
+// handleGetLLMConfig returns the current LLM routing configuration.
+// @Summary Get LLM config
+// @Description Returns the LLM routing configuration (API URL, model, system prompt, enabled flag). API key is included.
+// @Tags llm
+// @Produce json
+// @Success 200 {object} LLMConfig
+// @Router /api/llm-config [get]
+// @Security CookieAuth
 func (s *Server) handleGetLLMConfig(w http.ResponseWriter, r *http.Request) {
 	cfg, err := s.store.GetLLMConfig()
 	if err != nil {
@@ -852,6 +1229,18 @@ func (s *Server) handleGetLLMConfig(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, cfg)
 }
 
+// handleSaveLLMConfig saves the LLM routing configuration.
+// @Summary Save LLM config
+// @Description Persists the LLM routing configuration. Admin only.
+// @Tags llm
+// @Accept json
+// @Produce json
+// @Param config body LLMConfig true "LLM configuration"
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/llm-config/save [post]
+// @Security CookieAuth
 func (s *Server) handleSaveLLMConfig(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -869,6 +1258,19 @@ func (s *Server) handleSaveLLMConfig(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleBotDescription gets or sets the LLM description for a bot.
+// @Summary Get or set bot description
+// @Description GET returns the bot's description used for LLM routing. POST updates it.
+// @Tags bots
+// @Accept json
+// @Produce json
+// @Param bot_id query int false "Bot ID (GET only)"
+// @Param body body object false "Description update (POST only)" SchemaExample({"bot_id":1,"description":"Support bot for channel X"})
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/bots/description [get]
+// @Router /api/bots/description [post]
+// @Security CookieAuth
 func (s *Server) handleBotDescription(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		var req struct {
@@ -897,6 +1299,18 @@ func (s *Server) handleBotDescription(w http.ResponseWriter, r *http.Request) {
 
 // Auth handlers
 
+// handleLogin authenticates a user and creates a session cookie.
+// @Summary Login
+// @Description Authenticates with username and password. Sets a session cookie on success.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param credentials body object true "Login credentials" SchemaExample({"username":"admin","password":"secret"})
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/login [post]
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -949,6 +1363,13 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// handleLogout destroys the current session and clears the session cookie.
+// @Summary Logout
+// @Description Invalidates the current session token and clears the session cookie.
+// @Tags auth
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /api/auth/logout [post]
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	if cookie, err := r.Cookie(sessionCookieName); err == nil {
 		s.store.DeleteSession(cookie.Value)
@@ -963,6 +1384,15 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleMe returns the currently authenticated user's profile.
+// @Summary Get current user
+// @Description Returns the authenticated user's ID, username, display name, role, and other profile fields.
+// @Tags auth
+// @Produce json
+// @Success 200 {object} AuthUser
+// @Failure 401 {object} map[string]string
+// @Router /api/auth/me [get]
+// @Security CookieAuth
 func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 	user := getAuthUser(r)
 	if user == nil {
@@ -973,6 +1403,20 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, user)
 }
 
+// handleChangePassword changes the current user's password.
+// @Summary Change password
+// @Description Updates the authenticated user's password. If must_change_password is set, the old password check is skipped.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body object true "Password change request" SchemaExample({"old_password":"old","new_password":"new"})
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/change-password [post]
+// @Security CookieAuth
 func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -1017,6 +1461,15 @@ func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 
 // User management handlers (admin only)
 
+// handleUserList returns all application users with their bot assignments.
+// @Summary List app users
+// @Description Returns all users registered in the application, each with their assigned bot IDs. Admin only.
+// @Tags user-management
+// @Produce json
+// @Success 200 {array} object
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/users [get]
+// @Security CookieAuth
 func (s *Server) handleUserList(w http.ResponseWriter, r *http.Request) {
 	users, err := s.store.GetAllUsers()
 	if err != nil {
@@ -1045,6 +1498,19 @@ func (s *Server) handleUserList(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, result)
 }
 
+// handleUserAdd creates a new application user.
+// @Summary Add app user
+// @Description Creates a new user with username, password, display name, role (admin/user), and optional bot assignments. Admin only.
+// @Tags user-management
+// @Accept json
+// @Produce json
+// @Param body body object true "User creation request" SchemaExample({"username":"alice","password":"pass","display_name":"Alice","role":"user","bot_ids":[1,2]})
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/users/add [post]
+// @Security CookieAuth
 func (s *Server) handleUserAdd(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -1092,6 +1558,19 @@ func (s *Server) handleUserAdd(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]interface{}{"status": "ok", "id": id})
 }
 
+// handleUserUpdate updates an application user's display name, role, and bot assignments.
+// @Summary Update app user
+// @Description Updates the user's display name, role, and bot assignments. Cannot demote yourself. Admin only.
+// @Tags user-management
+// @Accept json
+// @Produce json
+// @Param body body object true "User update request" SchemaExample({"id":2,"display_name":"Alice","role":"user","bot_ids":[1]})
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/users/update [post]
+// @Security CookieAuth
 func (s *Server) handleUserUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -1132,6 +1611,18 @@ func (s *Server) handleUserUpdate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleUserDelete deletes an application user by ID.
+// @Summary Delete app user
+// @Description Deletes the specified user. Cannot delete yourself. Admin only.
+// @Tags user-management
+// @Produce json
+// @Param id query int true "User ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/users/delete [post]
+// @Security CookieAuth
 func (s *Server) handleUserDelete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -1153,6 +1644,18 @@ func (s *Server) handleUserDelete(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleUserResetPassword resets an application user's password and invalidates their sessions.
+// @Summary Reset user password
+// @Description Sets a new password for the specified user and deletes all their active sessions. Admin only.
+// @Tags user-management
+// @Accept json
+// @Produce json
+// @Param body body object true "Reset request" SchemaExample({"id":2,"password":"newpass"})
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/users/reset-password [post]
+// @Security CookieAuth
 func (s *Server) handleUserResetPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -1179,6 +1682,16 @@ func (s *Server) handleUserResetPassword(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleUserBots returns bot IDs assigned to an application user.
+// @Summary Get user's bot assignments
+// @Description Returns the list of bot IDs assigned to the specified user. Admin only.
+// @Tags user-management
+// @Produce json
+// @Param user_id query int true "User ID"
+// @Success 200 {array} integer
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/users/bots [get]
+// @Security CookieAuth
 func (s *Server) handleUserBots(w http.ResponseWriter, r *http.Request) {
 	userID, _ := strconv.ParseInt(r.URL.Query().Get("user_id"), 10, 64)
 	botIDs, err := s.store.GetUserBotIDs(userID)
@@ -1192,6 +1705,18 @@ func (s *Server) handleUserBots(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, botIDs)
 }
 
+// handleAssignBot grants a user access to a bot.
+// @Summary Assign bot to user
+// @Description Gives the specified user access to the specified bot. Admin only.
+// @Tags user-management
+// @Accept json
+// @Produce json
+// @Param body body object true "Assignment request" SchemaExample({"user_id":2,"bot_id":1})
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/users/bots/assign [post]
+// @Security CookieAuth
 func (s *Server) handleAssignBot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -1212,6 +1737,18 @@ func (s *Server) handleAssignBot(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "ok"})
 }
 
+// handleRevokeBot removes a user's access to a bot.
+// @Summary Revoke bot from user
+// @Description Removes the specified user's access to the specified bot. Admin only.
+// @Tags user-management
+// @Accept json
+// @Produce json
+// @Param body body object true "Revoke request" SchemaExample({"user_id":2,"bot_id":1})
+// @Success 200 {object} map[string]string
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} map[string]string
+// @Router /api/auth/users/bots/revoke [post]
+// @Security CookieAuth
 func (s *Server) handleRevokeBot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -1309,7 +1846,18 @@ func (s *Server) handleTelegramAPIProxy(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// handleMediaProxy proxies file downloads from Telegram API
+// handleMediaProxy proxies file downloads from Telegram API with WebP-to-PNG conversion.
+// @Summary Proxy media file
+// @Description Downloads a file from Telegram by file_id using the specified bot's token. WebP files (stickers) are automatically converted to PNG for browser compatibility.
+// @Tags media
+// @Produce octet-stream
+// @Param bot_id query string false "Bot ID (uses first available bot if omitted)"
+// @Param file_id query string true "Telegram file ID"
+// @Success 200 {file} binary
+// @Failure 400 {string} string "Bad request"
+// @Failure 500 {string} string "Internal error"
+// @Router /api/media [get]
+// @Security CookieAuth
 func (s *Server) handleMediaProxy(w http.ResponseWriter, r *http.Request) {
 	botID := r.URL.Query().Get("bot_id")
 	fileID := r.URL.Query().Get("file_id")

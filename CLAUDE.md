@@ -35,14 +35,15 @@ go test -v ./...
 
 ## Architecture
 
-Monolithic Go app (all `package main`), 6 source files + 1 test file + 1 embedded SPA template:
+Monolithic Go app (all `package main`), 7 source files + 1 test file + 1 embedded SPA template:
 
 - **main.go** — Entry point. Token is optional — if provided, registers CLI bot; otherwise uses bots from DB. Starts ProxyManager for all bots, launches HTTP server.
 - **bot.go** — `Bot` struct wrapping `OvyFlash/telegram-bot-api`. All Telegram API calls (send, ban, pin, admin management). `processUpdate()` dispatches to message/chat/member handlers.
 - **proxy.go** — `ProxyManager` manages ALL bots uniformly (no CLI vs web distinction). Runs independent `pollLoop` per bot with raw JSON `getUpdates`. Dual-mode per bot: forwards updates to backend URL (proxy) and/or processes them for chat tracking (management). `WebhookHandler()` for bots in webhook mode. Creates managed Bot instances automatically at Start(). Periodic backend health checks every 60s.
-- **server.go** — HTTP server with `embed.FS` for SPA. REST API for all bot/chat/message/admin operations. Telegram API proxy at `/tgapi/` captures outgoing bot messages. Multi-bot: resolves bot instances via `getBotFromRequest()` / `resolveBot()`.
+- **auth.go** — Authentication & authorization. `AuthUser` struct, bcrypt password hashing, session token generation (32 bytes hex). `authMiddleware` validates session cookies, `adminOnly` requires admin role. `checkBotAccess` verifies user has access to specific bot (admin=all, user=assigned only).
+- **server.go** — HTTP server with `embed.FS` for SPA. REST API for all bot/chat/message/admin operations. Telegram API proxy at `/tgapi/` captures outgoing bot messages. Multi-bot: resolves bot instances via `getBotFromRequest()` / `resolveBot()`. Auth endpoints at `/api/auth/*` for login/logout/user management.
 - **llm.go** — `LLMRouter` for AI-based message routing via OpenAI-compatible API. `LLMConfig` (api_url, api_key, model, system_prompt, enabled). `RouteMessage()` builds context from all bots+descriptions+chats, calls LLM Chat Completions, parses JSON routing decision. Works with any OpenAI-compatible endpoint (OpenAI, Ollama, LM Studio, etc.).
-- **store.go** — SQLite with WAL mode. All data models and DB operations. Auto-migrates schema on startup. Includes `llm_config` table and bot `description` column.
+- **store.go** — SQLite with WAL mode. All data models and DB operations. Auto-migrates schema on startup. Includes `llm_config` table, bot `description` column, and auth tables (`auth_users`, `auth_sessions`, `user_bots`). Auto-creates default admin on first run.
 - **server_capture_test.go** — Tests for `captureSentMessage` (copyMessage and sendMessage scenarios). Uses temp DB via `t.TempDir()`.
 - **templates/index.html** — Complete SPA (vanilla JS, no framework). Dark/light theme (Sora + JetBrains Mono, auto-switches via `prefers-color-scheme`). i18n with EN/RU support via `i18n` object and `t(key)` function. Compiled into binary via `//go:embed`.
 
@@ -62,6 +63,8 @@ Monolithic Go app (all `package main`), 6 source files + 1 test file + 1 embedde
 
 **LLM routing**: `ProxyManager` has `llmRouter *LLMRouter`. `applyLLMRoutes()` runs after rule-based `applyRoutes()` in `processUpdate()`. LLM receives message + all bot descriptions/chats and returns `{target_bot_id, target_chat_id, action, reason}`. Reverse routing works via existing `route_mappings` (RouteID=0 for LLM routes). Config managed via `/api/llm-config` and `/api/llm-config/save`. Bot descriptions via `/api/bots/description`.
 
+**Authentication**: Cookie-based sessions (30-day expiry, HttpOnly, SameSite=Strict). Passwords hashed with bcrypt. Two roles: `admin` (full access to all bots and settings) and `user` (access only to assigned bots). Many-to-many user↔bot via `user_bots` junction table. Default admin auto-created with `must_change_password=true`. Auth endpoints at `/api/auth/*`. No auth on `/tgapi/` (backends use it), `/` (SPA handles client-side), `/api/health`. Admin-only: bot CRUD, user management, routes, LLM config. Frontend hides admin controls for regular users and handles 401 → login redirect.
+
 **Media handling**: Messages store `media_type` and `file_id`. `bot.go:extractMedia()` detects photo/video/animation/sticker/voice/audio/document/video_note from Telegram updates. For stickers, uses `Thumbnail.FileID` (static preview) instead of main file (which may be TGS/WebM). `server.go:captureSentMessage` extracts media from API responses. `/api/media?file_id=&bot_id=` proxies file downloads from Telegram with automatic WebP→PNG conversion via `go-webp` for browser compatibility. Frontend renders images with lightbox overlay (click to zoom), video players, audio players inline. Messages support reply-to with `reply_to_message_id` in send API and visual reply badges in the UI.
 
 ## Dependencies
@@ -69,6 +72,7 @@ Monolithic Go app (all `package main`), 6 source files + 1 test file + 1 embedde
 - `github.com/OvyFlash/telegram-bot-api` — Telegram Bot API (actively maintained fork)
 - `modernc.org/sqlite` — SQLite driver (pure Go, no CGO)
 - `github.com/skrashevich/go-webp` — Pure Go WebP codec for sticker conversion (WebP→PNG)
+- `golang.org/x/crypto/bcrypt` — Password hashing for authentication
 
 ## Language
 

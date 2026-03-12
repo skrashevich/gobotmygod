@@ -638,6 +638,92 @@ body::before {
 [data-theme="light"] .theme-toggle .icon-sun { display: block; }
 [data-theme="light"] .theme-toggle .icon-moon { display: none; }
 
+/* ===== LOGIN SCREEN ===== */
+.login-screen {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+}
+.login-screen::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 15% 0%, rgba(34,211,238,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 100%, rgba(244,114,182,0.025) 0%, transparent 50%);
+}
+.login-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 40px;
+  width: 380px; max-width: 92vw;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: modalIn 0.3s ease-out;
+}
+.login-box::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), transparent 80%);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.login-box .logo { font-family: var(--ff-mono); font-size: 10px; font-weight: 500; text-transform: uppercase; color: var(--cyan); opacity: 0.7; margin-bottom: 2px; }
+.login-box .logo-main { font-family: var(--ff-display); font-size: 28px; font-weight: 800; background: linear-gradient(135deg, var(--text) 30%, var(--cyan) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 28px; }
+.login-box .modal-field { margin-bottom: 16px; }
+.login-error { color: var(--magenta); font-family: var(--ff-mono); font-size: 11px; margin-bottom: 12px; display: none; }
+.login-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, rgba(34,211,238,0.12), rgba(14,116,144,0.12)); border: 1px solid var(--cyan-dim); border-radius: var(--radius-sm); color: var(--cyan); font-family: var(--ff-mono); font-size: 12px; font-weight: 600; text-transform: uppercase; cursor: pointer; transition: var(--transition); letter-spacing: 1px; }
+.login-btn:hover { background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(14,116,144,0.2)); box-shadow: 0 0 20px rgba(34,211,238,0.1); }
+
+/* ===== SIDEBAR FOOTER ===== */
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface);
+  margin-top: auto;
+}
+.sidebar-footer-info {
+  flex: 1; min-width: 0;
+}
+.sidebar-footer-name {
+  font-family: var(--ff-mono); font-size: 12px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sidebar-footer-role {
+  font-family: var(--ff-mono); font-size: 9px; font-weight: 600; text-transform: uppercase;
+  color: var(--green); letter-spacing: 0.5px;
+}
+.sidebar-footer-role.role-user { color: var(--text3); }
+.sidebar-footer-actions { display: flex; gap: 4px; }
+.sidebar-footer .btn { padding: 4px 8px; font-size: 9px; }
+
+/* ===== USER MANAGEMENT ===== */
+.user-mgmt-list { max-height: 340px; overflow-y: auto; margin: 12px 0; }
+.user-mgmt-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  transition: var(--transition);
+}
+.user-mgmt-item:hover { border-color: var(--border-hl); background: var(--surface2); }
+.user-mgmt-name { font-family: var(--ff-mono); font-size: 13px; font-weight: 600; color: var(--text); }
+.user-mgmt-meta { font-family: var(--ff-mono); font-size: 10px; color: var(--text3); }
+.user-mgmt-role {
+  font-family: var(--ff-mono); font-size: 9px; font-weight: 600; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 3px;
+}
+.user-mgmt-role.role-admin { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: var(--green); }
+.user-mgmt-role.role-user { background: rgba(132,148,184,0.1); border: 1px solid rgba(132,148,184,0.2); color: var(--text2); }
+.user-mgmt-actions { margin-left: auto; display: flex; gap: 4px; }
+.bot-checkboxes { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; max-height: 140px; overflow-y: auto; }
+.bot-checkboxes label { display: flex; align-items: center; gap: 8px; font-family: var(--ff-mono); font-size: 12px; color: var(--text2); cursor: pointer; }
+.bot-checkboxes label:hover { color: var(--text); }
+.bot-checkboxes input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--cyan); }
+
 /* ===== LANG TOGGLE ===== */
 .lang-toggle { position: absolute; top: 16px; right: 50px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: var(--ff-mono); font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); z-index: var(--z-base); }
 .lang-toggle:hover { border-color: var(--cyan-dim); color: var(--cyan); }
@@ -687,6 +773,9 @@ body::before {
 [data-theme="light"] .toast { backdrop-filter: blur(12px) saturate(120%); }
 [data-theme="light"] .toast-success { background: rgba(5,150,105,0.1); box-shadow: 0 8px 24px rgba(5,150,105,0.08); }
 [data-theme="light"] .toast-error { background: rgba(219,39,119,0.1); box-shadow: 0 8px 24px rgba(219,39,119,0.06); }
+[data-theme="light"] .login-screen { background: var(--bg); }
+[data-theme="light"] .login-box { box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px var(--border); }
+[data-theme="light"] .user-mgmt-item:hover { background: var(--surface2); }
 
 [data-theme="light"] .route-action-fwd { background: rgba(8,145,178,0.1); border-color: rgba(8,145,178,0.25); }
 [data-theme="light"] .route-action-copy { background: rgba(217,119,6,0.1); border-color: rgba(217,119,6,0.25); }
@@ -727,6 +816,49 @@ p, .msg-text { text-wrap: pretty; }
 </head>
 <body>
 
+<!-- Login Screen -->
+<div id="loginScreen" class="login-screen" style="display:none">
+  <div class="login-box">
+    <div class="logo">TELEGRAM</div>
+    <div class="logo-main">botmux</div>
+    <div id="loginError" class="login-error"></div>
+    <div class="modal-field">
+      <label id="loginUsernameLabel">Username</label>
+      <input type="text" id="loginUsername" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="modal-field">
+      <label id="loginPasswordLabel">Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()" id="loginBtn">SIGN IN</button>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="changePasswordModal" class="modal-overlay" style="display:none" onclick="if(event.target===this&&!forceChangePassword)closeChangePasswordModal()">
+  <div class="modal" style="max-width:400px">
+    <h3 id="changePasswordTitle">Change Password</h3>
+    <div id="changePasswordHint" style="font-family:var(--ff-mono);font-size:11px;color:var(--amber);margin-bottom:14px;display:none"></div>
+    <div class="modal-field" id="oldPasswordField">
+      <label>Current Password</label>
+      <input type="password" id="oldPasswordInput" autocomplete="current-password">
+    </div>
+    <div class="modal-field">
+      <label id="newPasswordLabel">New Password</label>
+      <input type="password" id="newPasswordInput" autocomplete="new-password">
+    </div>
+    <div class="modal-field">
+      <label id="confirmPasswordLabel">Confirm Password</label>
+      <input type="password" id="confirmPasswordInput" autocomplete="new-password">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeChangePasswordModal()" id="chpwCancelBtn" style="display:none">CANCEL</button>
+      <button class="btn btn-primary" onclick="doChangePassword()" id="chpwSaveBtn">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<div id="appContainer" style="display:none;flex:1;height:100dvh;overflow:hidden">
 <div class="sidebar">
   <div class="sidebar-header">
     <div class="logo">TELEGRAM</div>
@@ -751,6 +883,18 @@ p, .msg-text { text-wrap: pretty; }
 
   <div class="section-label" id="chatsLabel" style="display:none">CHATS</div>
   <div class="chat-list" id="chatList"></div>
+
+  <div class="sidebar-footer" id="sidebarFooter">
+    <div class="sidebar-footer-info">
+      <div class="sidebar-footer-name" id="footerUserName"></div>
+      <div class="sidebar-footer-role" id="footerUserRole"></div>
+    </div>
+    <div class="sidebar-footer-actions">
+      <button class="btn" onclick="showUsersModal()" id="usersBtn" style="display:none;color:var(--cyan);border-color:var(--cyan-dim)">USERS</button>
+      <button class="btn" onclick="showChangePasswordModal(false)" id="chpwBtn">PWD</button>
+      <button class="btn btn-danger" onclick="doLogout()" style="padding:4px 8px;font-size:9px">EXIT</button>
+    </div>
+  </div>
 </div>
 
 <div class="main">
@@ -783,7 +927,7 @@ p, .msg-text { text-wrap: pretty; }
       <div class="panel route-panel" style="margin-top:16px;">
         <div class="route-header">
           <div class="panel-title">Routing Rules</div>
-          <button class="btn btn-primary btn-sm" onclick="showRouteModal()">+ ADD ROUTE</button>
+          <button class="btn btn-primary btn-sm" onclick="showRouteModal()" id="addRouteBtn">+ ADD ROUTE</button>
         </div>
         <div id="routesList"></div>
       </div>
@@ -1102,12 +1246,262 @@ let adminLogOffset = 0;
 let usersOffset = 0;
 let usersSearchTimeout = null;
 let botTokenUsername = '';
+let currentUser = null;
+let forceChangePassword = false;
 
 async function api(url, opts) {
   const res = await fetch(url, opts);
+  if (res.status === 401 && !url.includes('/api/auth/login') && !url.includes('/api/auth/me')) {
+    currentUser = null;
+    showLoginScreen();
+    throw new Error('Session expired');
+  }
   const data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error || 'Request failed');
   return data;
+}
+
+function isAdmin() { return currentUser && currentUser.role === 'admin'; }
+
+function showLoginScreen() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appContainer').style.display = 'none';
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginUsername').focus();
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appContainer').style.display = 'flex';
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  if (!currentUser) return;
+  document.getElementById('footerUserName').textContent = currentUser.display_name || currentUser.username;
+  const roleEl = document.getElementById('footerUserRole');
+  roleEl.textContent = currentUser.role.toUpperCase();
+  roleEl.className = 'sidebar-footer-role' + (currentUser.role === 'admin' ? '' : ' role-user');
+  // Show/hide admin-only elements
+  const adminOnly = isAdmin();
+  document.getElementById('usersBtn').style.display = adminOnly ? '' : 'none';
+  // +ADD bot button and LLM button
+  const sectionBtns = document.querySelectorAll('.section-label .btn');
+  sectionBtns.forEach(btn => {
+    if (btn.id === 'llmSettingsBtn' || btn.textContent.includes('+') || btn.textContent.includes('ADD') || btn.textContent.includes('ДОБАВИТЬ')) {
+      btn.style.display = adminOnly ? '' : 'none';
+    }
+  });
+  // Route add button
+  const addRouteBtn = document.getElementById('addRouteBtn');
+  if (addRouteBtn) addRouteBtn.style.display = adminOnly ? '' : 'none';
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!username || !password) return;
+  try {
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    currentUser = data.user;
+    if (data.must_change_password) {
+      showApp();
+      showChangePasswordModal(true);
+    } else {
+      showApp();
+      await loadBots();
+    }
+  } catch(e) {
+    const errEl = document.getElementById('loginError');
+    errEl.textContent = e.message === 'invalid credentials' ? t('login_invalid') : e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+async function doLogout() {
+  try { await fetch('/api/auth/logout', {method: 'POST'}); } catch(e) {}
+  currentUser = null;
+  currentBotID = null; currentBot = null; currentChat = null; allBots = [];
+  showLoginScreen();
+}
+
+function showChangePasswordModal(forced) {
+  forceChangePassword = !!forced;
+  document.getElementById('changePasswordModal').style.display = 'flex';
+  document.getElementById('oldPasswordInput').value = '';
+  document.getElementById('newPasswordInput').value = '';
+  document.getElementById('confirmPasswordInput').value = '';
+  const hint = document.getElementById('changePasswordHint');
+  const oldField = document.getElementById('oldPasswordField');
+  const cancelBtn = document.getElementById('chpwCancelBtn');
+  if (forced) {
+    hint.textContent = t('must_change_password');
+    hint.style.display = 'block';
+    oldField.style.display = 'none';
+    cancelBtn.style.display = 'none';
+  } else {
+    hint.style.display = 'none';
+    oldField.style.display = '';
+    cancelBtn.style.display = '';
+  }
+}
+function closeChangePasswordModal() {
+  if (forceChangePassword) return;
+  document.getElementById('changePasswordModal').style.display = 'none';
+}
+async function doChangePassword() {
+  const oldPw = document.getElementById('oldPasswordInput').value;
+  const newPw = document.getElementById('newPasswordInput').value;
+  const confirmPw = document.getElementById('confirmPasswordInput').value;
+  if (newPw !== confirmPw) { toast(t('passwords_mismatch'), 'error'); return; }
+  if (newPw.length < 4) { toast(t('password_too_short'), 'error'); return; }
+  try {
+    await api('/api/auth/change-password', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({old_password: oldPw, new_password: newPw})
+    });
+    forceChangePassword = false;
+    document.getElementById('changePasswordModal').style.display = 'none';
+    toast(t('password_changed'));
+    currentUser.must_change_password = false;
+    await loadBots();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ===== USER MANAGEMENT (admin) =====
+
+async function showUsersModal() {
+  if (!isAdmin()) return;
+  document.getElementById('usersModal').style.display = 'flex';
+  await loadUsersModal();
+}
+function closeUsersModal() { document.getElementById('usersModal').style.display = 'none'; }
+
+async function loadUsersModal() {
+  try {
+    const users = await api('/api/auth/users');
+    const list = document.getElementById('usersModalList');
+    list.innerHTML = users.map(u => `
+      <div class="user-mgmt-item">
+        <div>
+          <div class="user-mgmt-name">${esc(u.display_name || u.username)}</div>
+          <div class="user-mgmt-meta">@${esc(u.username)} · ${u.bot_ids.length} ${t('auth_bots_count')}</div>
+        </div>
+        <span class="user-mgmt-role role-${u.role}">${u.role.toUpperCase()}</span>
+        <div class="user-mgmt-actions">
+          <button class="btn" onclick="showUserEditForm(${u.id})" style="padding:3px 8px;font-size:9px">${t('edit')}</button>
+          <button class="btn" onclick="resetUserPassword(${u.id})" style="padding:3px 8px;font-size:9px;color:var(--amber);border-color:var(--amber)">PWD</button>
+          ${u.id !== currentUser.id ? `<button class="btn btn-danger" onclick="deleteUser(${u.id},'${esc(u.username)}')" style="padding:3px 8px;font-size:9px">${t('delete')}</button>` : ''}
+        </div>
+      </div>
+    `).join('') || '<div style="text-align:center;color:var(--text3);padding:20px">No users</div>';
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function showUserAddForm() {
+  document.getElementById('userEditModal').style.display = 'flex';
+  document.getElementById('userEditTitle').textContent = t('auth_add_user');
+  document.getElementById('userEditID').value = '';
+  document.getElementById('userEditUsername').value = '';
+  document.getElementById('userEditUsername').disabled = false;
+  document.getElementById('userEditPassword').value = '';
+  document.getElementById('userEditPasswordField').style.display = '';
+  document.getElementById('userEditDisplayName').value = '';
+  document.getElementById('userEditRole').value = 'user';
+  renderUserBotCheckboxes([]);
+}
+
+async function showUserEditForm(userId) {
+  const users = await api('/api/auth/users');
+  const u = users.find(x => x.id === userId);
+  if (!u) return;
+  document.getElementById('userEditModal').style.display = 'flex';
+  document.getElementById('userEditTitle').textContent = t('auth_edit_user');
+  document.getElementById('userEditID').value = u.id;
+  document.getElementById('userEditUsername').value = u.username;
+  document.getElementById('userEditUsername').disabled = true;
+  document.getElementById('userEditPasswordField').style.display = 'none';
+  document.getElementById('userEditDisplayName').value = u.display_name || '';
+  document.getElementById('userEditRole').value = u.role;
+  renderUserBotCheckboxes(u.bot_ids || []);
+}
+
+function renderUserBotCheckboxes(selectedIDs) {
+  const container = document.getElementById('userEditBots');
+  container.innerHTML = allBots.map(b => `
+    <label>
+      <input type="checkbox" value="${b.id}" ${selectedIDs.includes(b.id) ? 'checked' : ''}>
+      ${esc(b.name || b.bot_username)}
+    </label>
+  `).join('') || '<span style="color:var(--text3);font-size:11px">No bots available</span>';
+}
+
+function closeUserEditModal() { document.getElementById('userEditModal').style.display = 'none'; }
+
+async function saveUser() {
+  const id = document.getElementById('userEditID').value;
+  const selectedBots = [...document.querySelectorAll('#userEditBots input:checked')].map(c => parseInt(c.value));
+  try {
+    if (id) {
+      await api('/api/auth/users/update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          id: parseInt(id),
+          display_name: document.getElementById('userEditDisplayName').value,
+          role: document.getElementById('userEditRole').value,
+          bot_ids: selectedBots
+        })
+      });
+    } else {
+      const username = document.getElementById('userEditUsername').value.trim();
+      const password = document.getElementById('userEditPassword').value;
+      if (!username || !password) { toast(t('auth_username_password_required'), 'error'); return; }
+      await api('/api/auth/users/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          username,
+          password,
+          display_name: document.getElementById('userEditDisplayName').value,
+          role: document.getElementById('userEditRole').value,
+          bot_ids: selectedBots
+        })
+      });
+    }
+    closeUserEditModal();
+    toast(t('auth_user_saved'));
+    await loadUsersModal();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteUser(userId, username) {
+  if (!confirm(t('auth_confirm_delete_user').replace('{user}', username))) return;
+  try {
+    await api(`/api/auth/users/delete?id=${userId}`, {method: 'POST'});
+    toast(t('auth_user_deleted'));
+    await loadUsersModal();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function resetUserPassword(userId) {
+  const newPw = prompt(t('auth_enter_new_password'));
+  if (!newPw) return;
+  try {
+    await api('/api/auth/users/reset-password', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({id: userId, password: newPw})
+    });
+    toast(t('auth_password_reset'));
+  } catch(e) { toast(e.message, 'error'); }
 }
 
 function toast(msg, type = 'success') {
@@ -1274,6 +1668,20 @@ const i18n = {
     cond_llm: 'LLM (AI)',
     cond_llm_hint: 'Describe the routing rule in natural language',
     llm_settings_btn: 'LLM',
+    // auth
+    sign_in: 'SIGN IN', login_username: 'Username', login_password: 'Password',
+    login_invalid: 'Invalid username or password',
+    change_password: 'Change Password', current_password: 'Current Password',
+    new_password: 'New Password', confirm_password: 'Confirm Password',
+    must_change_password: 'You must change your password before continuing',
+    passwords_mismatch: 'Passwords do not match', password_too_short: 'Password too short (min 4)',
+    password_changed: 'Password changed',
+    // user management
+    user_management: 'User Management', auth_add_user: 'Add User', auth_edit_user: 'Edit User',
+    auth_bots_count: 'bots', auth_user_saved: 'User saved', auth_user_deleted: 'User deleted',
+    auth_confirm_delete_user: 'Delete user {user}?', auth_enter_new_password: 'Enter new password:',
+    auth_password_reset: 'Password reset', auth_username_password_required: 'Username and password required',
+    bot_access: 'Bot Access', role: 'Role', display_name: 'Display Name',
   },
   ru: {
     command_center: 'TELEGRAM', tg_control: 'botmux',
@@ -1407,6 +1815,20 @@ const i18n = {
     cond_llm: 'LLM (\u0418\u0418)',
     cond_llm_hint: '\u041e\u043f\u0438\u0448\u0438\u0442\u0435 \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u043c\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u0438 \u043d\u0430 \u043e\u0431\u044b\u0447\u043d\u043e\u043c \u044f\u0437\u044b\u043a\u0435',
     llm_settings_btn: 'LLM',
+    // auth
+    sign_in: 'ВОЙТИ', login_username: 'Имя пользователя', login_password: 'Пароль',
+    login_invalid: 'Неверное имя пользователя или пароль',
+    change_password: 'Смена пароля', current_password: 'Текущий пароль',
+    new_password: 'Новый пароль', confirm_password: 'Подтвердите пароль',
+    must_change_password: 'Необходимо сменить пароль перед продолжением',
+    passwords_mismatch: 'Пароли не совпадают', password_too_short: 'Пароль слишком короткий (мин. 4)',
+    password_changed: 'Пароль изменён',
+    // user management
+    user_management: 'Управление пользователями', auth_add_user: 'Добавить пользователя', auth_edit_user: 'Редактировать пользователя',
+    auth_bots_count: 'ботов', auth_user_saved: 'Пользователь сохранён', auth_user_deleted: 'Пользователь удалён',
+    auth_confirm_delete_user: 'Удалить пользователя {user}?', auth_enter_new_password: 'Введите новый пароль:',
+    auth_password_reset: 'Пароль сброшен', auth_username_password_required: 'Имя пользователя и пароль обязательны',
+    bot_access: 'Доступ к ботам', role: 'Роль', display_name: 'Отображаемое имя',
   }
 };
 
@@ -1442,6 +1864,23 @@ function toggleLang() {
 function applyLang() {
   // lang toggle button
   document.querySelector('.lang-toggle').textContent = currentLang.toUpperCase();
+  // login screen
+  const loginLabel = document.getElementById('loginUsernameLabel');
+  if (loginLabel) loginLabel.textContent = t('login_username');
+  const loginPwLabel = document.getElementById('loginPasswordLabel');
+  if (loginPwLabel) loginPwLabel.textContent = t('login_password');
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) loginBtn.textContent = t('sign_in');
+  // change password modal
+  const chpwTitle = document.getElementById('changePasswordTitle');
+  if (chpwTitle) chpwTitle.textContent = t('change_password');
+  const newPwLabel = document.getElementById('newPasswordLabel');
+  if (newPwLabel) newPwLabel.textContent = t('new_password');
+  const confirmPwLabel = document.getElementById('confirmPasswordLabel');
+  if (confirmPwLabel) confirmPwLabel.textContent = t('confirm_password');
+  // users modal
+  const usersTitle = document.getElementById('usersModalTitle');
+  if (usersTitle) usersTitle.querySelector('span').textContent = t('user_management');
   // sidebar
   document.querySelector('.logo').textContent = t('command_center');
   document.querySelector('.logo-main').textContent = t('tg_control');
@@ -1725,19 +2164,34 @@ function highlight(text, query) {
 
 async function init() {
   applyLang();
-  await loadBots();
-  setInterval(loadBots, 15000);
-  setInterval(() => {
-    if (!currentChat) return;
-    const activeTab = document.querySelector('.tab.active');
-    if (!activeTab) return;
-    const tab = activeTab.dataset.tab;
-    if (tab === 'messages' && !document.getElementById('searchInput')?.value.trim()) loadMessages();
-    else if (tab === 'stats') loadStats();
-    else if (tab === 'users') loadUsers();
-    else if (tab === 'adminlog') loadAdminLog();
-  }, 5000);
+  // Check if already authenticated
+  try {
+    currentUser = await api('/api/auth/me');
+    showApp();
+    if (currentUser.must_change_password) {
+      showChangePasswordModal(true);
+      return;
+    }
+    await loadBots();
+    setInterval(loadBots, 15000);
+    setInterval(() => {
+      if (!currentChat) return;
+      const activeTab = document.querySelector('.tab.active');
+      if (!activeTab) return;
+      const tab = activeTab.dataset.tab;
+      if (tab === 'messages' && !document.getElementById('searchInput')?.value.trim()) loadMessages();
+      else if (tab === 'stats') loadStats();
+      else if (tab === 'users') loadUsers();
+      else if (tab === 'adminlog') loadAdminLog();
+    }, 5000);
+  } catch(e) {
+    showLoginScreen();
+  }
 }
+
+// Login on Enter key
+document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('loginUsername').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
 // ===== BOT LIST =====
 
@@ -1813,11 +2267,13 @@ function showBotDetail() {
   document.getElementById('botDetailBadges').innerHTML = badges.join(' ');
 
   const actions = [];
-  actions.push(`<button class="btn btn-sm btn-primary" onclick="editCurrentBot()">${t('edit')}</button>`);
-  if (b.proxy_enabled && b.backend_url) {
-    actions.push(`<button class="btn btn-sm" onclick="checkBackendHealth()" id="btnCheckHealth">${t('check_webhook')}</button>`);
+  if (isAdmin()) {
+    actions.push(`<button class="btn btn-sm btn-primary" onclick="editCurrentBot()">${t('edit')}</button>`);
+    if (b.proxy_enabled && b.backend_url) {
+      actions.push(`<button class="btn btn-sm" onclick="checkBackendHealth()" id="btnCheckHealth">${t('check_webhook')}</button>`);
+    }
+    actions.push(`<button class="btn btn-danger btn-sm" onclick="deleteCurrentBot()">${t('delete')}</button>`);
   }
-  actions.push(`<button class="btn btn-danger btn-sm" onclick="deleteCurrentBot()">${t('delete')}</button>`);
   document.getElementById('botDetailActions').innerHTML = actions.join('');
 
   const rows = [
@@ -1893,10 +2349,10 @@ function renderRoutes(routes) {
           </div>
           ${r.description ? `<div class="route-meta"><span class="route-desc">${esc(r.description)}</span></div>` : ''}
         </div>
-        <div class="route-actions">
+        ${isAdmin() ? `<div class="route-actions">
           <button class="btn btn-sm" onclick="editRoute(${r.id})">${t('edit')}</button>
           <button class="btn btn-danger btn-sm" onclick="deleteRoute(${r.id})">${t('del')}</button>
-        </div>
+        </div>` : ''}
       </div>`;
   }).join('');
 }
@@ -2763,6 +3219,54 @@ function closeLightbox() {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 </script>
+<!-- User Management Modal (admin only) -->
+<div id="usersModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeUsersModal()">
+  <div class="modal" style="max-width:560px">
+    <h3 id="usersModalTitle" style="display:flex;align-items:center;justify-content:space-between">
+      <span>User Management</span>
+      <button class="btn btn-primary" onclick="showUserAddForm()" style="padding:4px 10px;font-size:10px" id="addUserBtn">+ ADD</button>
+    </h3>
+    <div id="usersModalList" class="user-mgmt-list"></div>
+  </div>
+</div>
+
+<!-- Add/Edit User Modal -->
+<div id="userEditModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeUserEditModal()">
+  <div class="modal" style="max-width:460px">
+    <h3 id="userEditTitle">Add User</h3>
+    <input type="hidden" id="userEditID">
+    <div class="modal-field">
+      <label>Username</label>
+      <input type="text" id="userEditUsername" placeholder="username" autocomplete="off">
+    </div>
+    <div class="modal-field" id="userEditPasswordField">
+      <label>Password</label>
+      <input type="password" id="userEditPassword" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="modal-field">
+      <label>Display Name</label>
+      <input type="text" id="userEditDisplayName" placeholder="John Doe">
+    </div>
+    <div class="modal-field">
+      <label>Role</label>
+      <select id="userEditRole" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);font-family:var(--ff-mono);font-size:13px;outline:none">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Bot Access</label>
+      <div id="userEditBots" class="bot-checkboxes"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeUserEditModal()">CANCEL</button>
+      <button class="btn btn-primary" onclick="saveUser()" id="userEditSaveBtn">SAVE</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /appContainer -->
+
 <div id="mediaLightbox" class="media-lightbox" onclick="closeLightbox()">
   <img src="" alt="">
 </div>

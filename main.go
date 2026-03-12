@@ -6,6 +6,16 @@ import (
 	"os"
 )
 
+// @title BotMux API
+// @version 1.0
+// @description Multi-bot Telegram manager with proxying, routing and LLM-based message dispatch.
+// @contact.name BotMux
+// @license.name MIT
+// @host localhost:8080
+// @BasePath /
+// @securityDefinitions.apikey CookieAuth
+// @in cookie
+// @name botmux_session
 func main() {
 	token := flag.String("token", "", "Telegram bot token (optional if bots already exist in DB)")
 	addr := flag.String("addr", ":8080", "HTTP listen address")

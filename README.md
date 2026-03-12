@@ -116,6 +116,17 @@ Custom classification system for chat members:
 - Works alongside rule-based routing — LLM routing runs after traditional condition-based routes
 - Reverse routing (Source-NAT) works automatically for LLM-routed messages
 
+### Authentication & Authorization
+- **Session-based authentication** with secure HTTP-only cookies (30-day sessions)
+- **Role-based access control** — two roles: `admin` (full access) and `user` (assigned bots only)
+- **Default admin account** — auto-created on first run (`admin` / `admin`) with mandatory password change
+- **User management** — admin panel for adding, editing, and deleting users
+- **Bot access control** — many-to-many: one bot can be assigned to multiple users, one user can access multiple bots
+- **Admin delegation** — any admin can promote other users to admin role
+- **Password management** — admins can reset user passwords; users can change their own
+- **Granular UI enforcement** — non-admin users cannot see bot management, routing, or LLM configuration controls
+- Password hashing with bcrypt
+
 ### Internationalization (i18n)
 - Interface available in **English** and **Russian**
 - Language toggle button in the sidebar header (EN/RU)
