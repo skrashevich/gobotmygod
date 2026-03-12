@@ -852,6 +852,9 @@ p, .msg-text { text-wrap: pretty; }
       <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
     </div>
     <button class="login-btn" onclick="doLogin()" id="loginBtn">SIGN IN</button>
+    <div id="demoHint" style="display:none;text-align:center;margin-top:10px;font-size:11px;color:var(--text-secondary);font-family:var(--ff-mono);opacity:0.7">
+      Demo mode — use <b>demo</b> / <b>demo</b> to sign in
+    </div>
   </div>
 </div>
 
@@ -1337,14 +1340,39 @@ async function api(url, opts) {
 
 function isAdmin() { return currentUser && currentUser.role === 'admin'; }
 
+let isDemoMode = false;
+
 function showLoginScreen() {
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('appContainer').style.display = 'none';
   document.getElementById('loginError').style.display = 'none';
-  document.getElementById('loginUsername').value = '';
-  document.getElementById('loginPassword').value = '';
+  if (isDemoMode) {
+    document.getElementById('loginUsername').value = 'demo';
+    document.getElementById('loginPassword').value = 'demo';
+    document.getElementById('demoHint').style.display = '';
+  } else {
+    document.getElementById('loginUsername').value = '';
+    document.getElementById('loginPassword').value = '';
+  }
   document.getElementById('loginUsername').focus();
 }
+
+// Detect demo mode via health endpoint
+(async function detectDemoMode() {
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    if (data.mode === 'demo') {
+      isDemoMode = true;
+      const hint = document.getElementById('demoHint');
+      if (hint) hint.style.display = '';
+      const u = document.getElementById('loginUsername');
+      const p = document.getElementById('loginPassword');
+      if (u && !u.value) u.value = 'demo';
+      if (p && !p.value) p.value = 'demo';
+    }
+  } catch(e) {}
+})();
 
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
