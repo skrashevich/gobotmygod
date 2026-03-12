@@ -66,39 +66,51 @@
   },
   "hotPaths": [
     {
-      "path": "server.go",
-      "accessCount": 116,
-      "lastAccessed": 1773296800526,
+      "path": "templates/index.html",
+      "accessCount": 129,
+      "lastAccessed": 1773297724592,
       "type": "directory"
     },
     {
-      "path": "templates/index.html",
-      "accessCount": 114,
-      "lastAccessed": 1773296992310,
+      "path": "server.go",
+      "accessCount": 129,
+      "lastAccessed": 1773298106898,
       "type": "directory"
     },
     {
       "path": "store.go",
-      "accessCount": 31,
-      "lastAccessed": 1773296505710,
+      "accessCount": 37,
+      "lastAccessed": 1773297846000,
       "type": "file"
     },
     {
       "path": "README.md",
-      "accessCount": 24,
-      "lastAccessed": 1773297055550,
+      "accessCount": 29,
+      "lastAccessed": 1773298244530,
       "type": "file"
     },
     {
       "path": "CLAUDE.md",
-      "accessCount": 16,
-      "lastAccessed": 1773297081643,
+      "accessCount": 21,
+      "lastAccessed": 1773298052390,
+      "type": "file"
+    },
+    {
+      "path": "bridge.go",
+      "accessCount": 20,
+      "lastAccessed": 1773298121570,
       "type": "file"
     },
     {
       "path": "bot.go",
-      "accessCount": 14,
-      "lastAccessed": 1773296762924,
+      "accessCount": 15,
+      "lastAccessed": 1773297837434,
+      "type": "directory"
+    },
+    {
+      "path": "",
+      "accessCount": 11,
+      "lastAccessed": 1773297839701,
       "type": "directory"
     },
     {
@@ -126,33 +138,27 @@
       "type": "file"
     },
     {
+      "path": "proxy.go",
+      "accessCount": 4,
+      "lastAccessed": 1773297826675,
+      "type": "file"
+    },
+    {
+      "path": "slack.go",
+      "accessCount": 4,
+      "lastAccessed": 1773298102010,
+      "type": "file"
+    },
+    {
       "path": "go.mod",
       "accessCount": 3,
       "lastAccessed": 1773293995379,
       "type": "file"
     },
     {
-      "path": "proxy.go",
-      "accessCount": 3,
-      "lastAccessed": 1773295999100,
-      "type": "file"
-    },
-    {
-      "path": "",
-      "accessCount": 2,
-      "lastAccessed": 1773294320565,
-      "type": "directory"
-    },
-    {
       "path": "llm.go",
       "accessCount": 2,
       "lastAccessed": 1773294326456,
-      "type": "file"
-    },
-    {
-      "path": "bridge.go",
-      "accessCount": 2,
-      "lastAccessed": 1773296781384,
       "type": "file"
     },
     {
