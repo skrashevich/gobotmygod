@@ -79,8 +79,8 @@
     },
     {
       "path": "server.go",
-      "accessCount": 12,
-      "lastAccessed": 1773465763178,
+      "accessCount": 18,
+      "lastAccessed": 1773467199354,
       "type": "directory"
     },
     {
@@ -99,6 +99,24 @@
       "path": "proxy.go",
       "accessCount": 6,
       "lastAccessed": 1773465909876,
+      "type": "file"
+    },
+    {
+      "path": ".dockerignore",
+      "accessCount": 2,
+      "lastAccessed": 1773467350483,
+      "type": "file"
+    },
+    {
+      "path": "Dockerfile",
+      "accessCount": 1,
+      "lastAccessed": 1773467302192,
+      "type": "file"
+    },
+    {
+      "path": "go.mod",
+      "accessCount": 1,
+      "lastAccessed": 1773467307234,
       "type": "file"
     }
   ],

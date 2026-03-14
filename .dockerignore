@@ -5,5 +5,10 @@ botdata.db
 *.db-shm
 screenshots/
 .git/
+.github/
 .omc/
 .claude/
+README.md
+LICENSE
+Dockerfile
+.dockerignore
