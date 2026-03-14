@@ -2258,7 +2258,7 @@ func (s *Server) handleTelegramAPIProxy(w http.ResponseWriter, r *http.Request) 
 	if len(bodyPreview) > 512 {
 		bodyPreview = bodyPreview[:512] + "..."
 	}
-	log.Printf("[tgapi-proxy] %s %s bot=%s body=%s", r.Method, method, maskedToken, bodyPreview)
+	log.Printf("[tgapi-proxy] %s %s bot=%s path=%s body=%s", r.Method, method, maskedToken, r.URL.Path, bodyPreview)
 
 	// Forward to Telegram
 	tgURL := fmt.Sprintf("%s/bot%s/%s", telegramAPIURL, botToken, method)
