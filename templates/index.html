@@ -1740,7 +1740,7 @@ function esc(s) {
 }
 
 function formatChatTime(ts) {
-  const d = new Date(ts * 1000);
+  const d = new Date(ts);
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
   const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;

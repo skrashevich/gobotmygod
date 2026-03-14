@@ -210,7 +210,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 		FromUser:  fromUser,
 		FromID:    fromID,
 		Text:      text,
-		Date:      int64(msg.Date),
+		Date:      int64(msg.Date) * 1000,
 		ReplyToID: replyToID,
 		MediaType: mediaType,
 		FileID:    fileID,
@@ -240,7 +240,7 @@ func (b *Bot) handleChannelPost(msg *tgbotapi.Message) {
 		ChatID:    msg.Chat.ID,
 		FromUser:  fromUser,
 		Text:      text,
-		Date:      int64(msg.Date),
+		Date:      int64(msg.Date) * 1000,
 		MediaType: mediaType,
 		FileID:    fileID,
 	}
@@ -365,7 +365,7 @@ func (b *Bot) SendMessage(chatID int64, text string) error {
 		FromUser: fromUser,
 		FromID:   b.api.Self.ID,
 		Text:     text,
-		Date:     int64(sent.Date),
+		Date:     int64(sent.Date) * 1000,
 	})
 	if b.onMessageSent != nil {
 		b.onMessageSent(b.botID, chatID, text, sent.MessageID, 0)
@@ -385,7 +385,7 @@ func (b *Bot) SendMessageGetID(chatID int64, text string) (int, error) {
 	b.store.SaveMessage(Message{
 		ID: sent.MessageID, ChatID: sent.Chat.ID,
 		FromUser: fromUser, FromID: b.api.Self.ID,
-		Text: text, Date: int64(sent.Date),
+		Text: text, Date: int64(sent.Date) * 1000,
 	})
 	if b.onMessageSent != nil {
 		b.onMessageSent(b.botID, chatID, text, sent.MessageID, 0)
@@ -406,7 +406,7 @@ func (b *Bot) SendMessageReply(chatID int64, text string, replyToMsgID int) (int
 	b.store.SaveMessage(Message{
 		ID: sent.MessageID, ChatID: sent.Chat.ID,
 		FromUser: fromUser, FromID: b.api.Self.ID,
-		Text: text, Date: int64(sent.Date),
+		Text: text, Date: int64(sent.Date) * 1000,
 		ReplyToID: replyToMsgID,
 	})
 	if b.onMessageSent != nil {

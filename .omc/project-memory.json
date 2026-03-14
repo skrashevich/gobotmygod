@@ -66,40 +66,46 @@
   },
   "hotPaths": [
     {
-      "path": "templates/index.html",
-      "accessCount": 38,
-      "lastAccessed": 1773468434061,
-      "type": "directory"
+      "path": "store.go",
+      "accessCount": 52,
+      "lastAccessed": 1773469046571,
+      "type": "file"
     },
     {
-      "path": "store.go",
-      "accessCount": 28,
-      "lastAccessed": 1773468452932,
-      "type": "file"
+      "path": "templates/index.html",
+      "accessCount": 44,
+      "lastAccessed": 1773469032828,
+      "type": "directory"
     },
     {
       "path": "server.go",
-      "accessCount": 28,
-      "lastAccessed": 1773468458470,
+      "accessCount": 33,
+      "lastAccessed": 1773468974747,
       "type": "directory"
     },
     {
-      "path": "proxy.go",
-      "accessCount": 9,
-      "lastAccessed": 1773468488270,
+      "path": "bot.go",
+      "accessCount": 13,
+      "lastAccessed": 1773468993789,
       "type": "file"
     },
     {
-      "path": "bot.go",
-      "accessCount": 8,
-      "lastAccessed": 1773465502406,
+      "path": "proxy.go",
+      "accessCount": 10,
+      "lastAccessed": 1773468848919,
       "type": "file"
     },
     {
       "path": "",
-      "accessCount": 6,
-      "lastAccessed": 1773465748438,
+      "accessCount": 10,
+      "lastAccessed": 1773469022417,
       "type": "directory"
+    },
+    {
+      "path": "bridge.go",
+      "accessCount": 3,
+      "lastAccessed": 1773468985871,
+      "type": "file"
     },
     {
       "path": ".dockerignore",

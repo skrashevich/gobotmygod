@@ -2578,7 +2578,7 @@ func (s *Server) captureSentMessage(token, method string, reqBody []byte, conten
 		FromUser:  fromUser,
 		FromID:    msg.From.ID,
 		Text:      text,
-		Date:      msg.Date,
+		Date:      msg.Date * 1000,
 		MediaType: mediaType,
 		FileID:    fileID,
 	}
@@ -2637,7 +2637,7 @@ func (s *Server) captureCopiedMessage(token string, reqBody []byte, contentType 
 		FromUser:  fromUser,
 		FromID:    fromID,
 		Text:      text,
-		Date:      time.Now().Unix(),
+		Date:      time.Now().UnixMilli(),
 		MediaType: sourceMsg.MediaType,
 		FileID:    sourceMsg.FileID,
 	}

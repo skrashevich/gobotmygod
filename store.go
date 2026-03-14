@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"sync"
 	"time"
 
@@ -363,6 +364,14 @@ func (s *Store) migrate() error {
 		return err
 	}
 
+	// Migrate date column from seconds to milliseconds
+	var maxDate int64
+	s.db.QueryRow(`SELECT COALESCE(MAX(date), 0) FROM messages`).Scan(&maxDate)
+	if maxDate > 0 && maxDate < 2000000000 { // seconds-range timestamps (before year 2033)
+		s.db.Exec(`UPDATE messages SET date = date * 1000 WHERE date > 0 AND date < 2000000000`)
+		log.Printf("[store] migrated message dates from seconds to milliseconds")
+	}
+
 	// Add source_chat_id column to routes if missing
 	var hasSourceChatID int
 	s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('routes') WHERE name='source_chat_id'`).Scan(&hasSourceChatID)
@@ -373,7 +382,7 @@ func (s *Store) migrate() error {
 	// Backfill known_users from messages
 	s.db.Exec(`
 		INSERT OR IGNORE INTO known_users (chat_id, user_id, username, first_seen)
-		SELECT chat_id, from_id, from_user, datetime(MIN(date), 'unixepoch')
+		SELECT chat_id, from_id, from_user, datetime(MIN(date)/1000, 'unixepoch')
 		FROM messages WHERE from_id != 0
 		GROUP BY chat_id, from_id
 	`)
@@ -603,7 +612,7 @@ func (s *Store) GetChats(botID int64) ([]Chat, error) {
 			COALESCE(m.text, ''), COALESCE(m.from_user, ''), COALESCE(m.date, 0)
 		FROM chats c
 		LEFT JOIN messages m ON m.chat_id = c.id AND m.id = (
-			SELECT id FROM messages WHERE chat_id = c.id ORDER BY date DESC LIMIT 1
+			SELECT id FROM messages WHERE chat_id = c.id ORDER BY id DESC LIMIT 1
 		)
 		WHERE c.bot_id=?
 		ORDER BY CASE WHEN m.date IS NOT NULL THEN m.date ELSE 0 END DESC, c.title
@@ -643,7 +652,7 @@ func (s *Store) SaveMessage(m Message) error {
 	`, m.ID, m.ChatID, m.FromUser, m.FromID, m.Text, m.Date, m.ReplyToID, m.MediaType, m.FileID)
 	if err == nil {
 		if rows, _ := res.RowsAffected(); rows > 0 {
-			m.DateStr = time.Unix(m.Date, 0).Format("2006-01-02 15:04:05")
+			m.DateStr = time.UnixMilli(m.Date).Format("2006-01-02 15:04:05")
 			s.notifySubscribers(m)
 		}
 	}
@@ -666,7 +675,7 @@ func (s *Store) GetMessages(chatID int64, limit, offset int) ([]Message, error) 
 		if err := rows.Scan(&m.ID, &m.ChatID, &m.FromUser, &m.FromID, &m.Text, &m.Date, &m.ReplyToID, &m.Deleted, &m.MediaType, &m.FileID); err != nil {
 			return nil, err
 		}
-		m.DateStr = time.Unix(m.Date, 0).Format("2006-01-02 15:04:05")
+		m.DateStr = time.UnixMilli(m.Date).Format("2006-01-02 15:04:05")
 		msgs = append(msgs, m)
 	}
 	return msgs, nil
@@ -681,7 +690,7 @@ func (s *Store) GetMessage(chatID int64, messageID int) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	m.DateStr = time.Unix(m.Date, 0).Format("2006-01-02 15:04:05")
+	m.DateStr = time.UnixMilli(m.Date).Format("2006-01-02 15:04:05")
 	return &m, nil
 }
 
@@ -690,10 +699,10 @@ func (s *Store) GetChatStats(chatID int64) (*ChatStats, error) {
 	s.db.QueryRow(`SELECT title FROM chats WHERE id = ?`, chatID).Scan(&stats.Title)
 	s.db.QueryRow(`SELECT COUNT(*) FROM messages WHERE chat_id = ?`, chatID).Scan(&stats.TotalMessages)
 
-	todayStart := time.Now().Truncate(24 * time.Hour).Unix()
+	todayStart := time.Now().Truncate(24 * time.Hour).UnixMilli()
 	s.db.QueryRow(`SELECT COUNT(*) FROM messages WHERE chat_id = ? AND date >= ?`, chatID, todayStart).Scan(&stats.TodayMessages)
 
-	weekAgo := time.Now().Add(-7 * 24 * time.Hour).Unix()
+	weekAgo := time.Now().Add(-7 * 24 * time.Hour).UnixMilli()
 	s.db.QueryRow(`SELECT COUNT(DISTINCT from_id) FROM messages WHERE chat_id = ? AND date >= ? AND from_id != 0`, chatID, weekAgo).Scan(&stats.ActiveUsers)
 
 	rows, err := s.db.Query(`
@@ -711,7 +720,7 @@ func (s *Store) GetChatStats(chatID int64) (*ChatStats, error) {
 	}
 
 	rows2, err := s.db.Query(`
-		SELECT CAST(strftime('%H', date, 'unixepoch', 'localtime') AS INTEGER) as hour, COUNT(*) as cnt
+		SELECT CAST(strftime('%H', date/1000, 'unixepoch', 'localtime') AS INTEGER) as hour, COUNT(*) as cnt
 		FROM messages WHERE chat_id = ? AND date >= ?
 		GROUP BY hour ORDER BY hour
 	`, chatID, weekAgo)
@@ -735,7 +744,7 @@ func (s *Store) SearchMessages(chatID int64, query string, limit int) ([]Message
 	rows, err := s.db.Query(`
 		SELECT id, chat_id, from_user, from_id, text, date, reply_to_id, deleted, media_type, file_id
 		FROM messages WHERE chat_id = ? AND text LIKE ?
-		ORDER BY date DESC LIMIT ?
+		ORDER BY id DESC LIMIT ?
 	`, chatID, "%"+query+"%", limit)
 	if err != nil {
 		return nil, err
@@ -746,7 +755,7 @@ func (s *Store) SearchMessages(chatID int64, query string, limit int) ([]Message
 	for rows.Next() {
 		var m Message
 		rows.Scan(&m.ID, &m.ChatID, &m.FromUser, &m.FromID, &m.Text, &m.Date, &m.ReplyToID, &m.Deleted, &m.MediaType, &m.FileID)
-		m.DateStr = time.Unix(m.Date, 0).Format("2006-01-02 15:04:05")
+		m.DateStr = time.UnixMilli(m.Date).Format("2006-01-02 15:04:05")
 		msgs = append(msgs, m)
 	}
 	return msgs, nil
