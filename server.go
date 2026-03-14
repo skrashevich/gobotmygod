@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"mime"
+	"path"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -2413,10 +2414,28 @@ func (s *Server) handleMediaProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Forward content type and cache
-	if ct != "" {
-		w.Header().Set("Content-Type", ct)
+	// Determine correct Content-Type: upstream may return application/octet-stream
+	if ct == "" || ct == "application/octet-stream" {
+		// Try to infer from file extension
+		ext := path.Ext(fileResp.Result.FilePath)
+		if mimeType := mime.TypeByExtension(ext); mimeType != "" {
+			ct = mimeType
+		} else {
+			// Sniff from content
+			var buf bytes.Buffer
+			sniffBytes := make([]byte, 512)
+			n, _ := io.ReadAtLeast(fileResp2.Body, sniffBytes, 1)
+			if n > 0 {
+				ct = http.DetectContentType(sniffBytes[:n])
+				buf.Write(sniffBytes[:n])
+			}
+			w.Header().Set("Content-Type", ct)
+			w.Header().Set("Cache-Control", "public, max-age=86400")
+			io.Copy(w, io.MultiReader(&buf, fileResp2.Body))
+			return
+		}
 	}
+	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Cache-Control", "public, max-age=86400")
 	io.Copy(w, fileResp2.Body)
 }
