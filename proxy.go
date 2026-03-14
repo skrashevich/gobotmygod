@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -972,10 +973,18 @@ func (pm *ProxyManager) CheckBackendHealth(backendURL, secretToken string) (stri
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 200 && resp.StatusCode < 500 {
+	// Read response body (limited to 1KB) for error details
+	bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+	bodyText := strings.TrimSpace(string(bodyBytes))
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return fmt.Sprintf("ok:%d", resp.StatusCode), nil
 	}
-	return fmt.Sprintf("error:%d", resp.StatusCode), fmt.Errorf("backend returned %d", resp.StatusCode)
+	errMsg := fmt.Sprintf("HTTP %d", resp.StatusCode)
+	if bodyText != "" {
+		errMsg += ": " + bodyText
+	}
+	return fmt.Sprintf("error:%d", resp.StatusCode), fmt.Errorf("%s", errMsg)
 }
 
 // CheckAndStoreHealth runs a health check and stores the result

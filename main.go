@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -58,6 +59,10 @@ func main() {
 		*dbPath = "demo.db"
 	}
 
+	// Set up log buffer to capture application logs for web UI
+	logBuf := NewLogBuffer(1000)
+	log.SetOutput(io.MultiWriter(os.Stderr, logBuf))
+
 	store, err := NewStore(*dbPath)
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
@@ -71,6 +76,7 @@ func main() {
 	proxy := NewProxyManager(store)
 	server := NewServer(store, proxy)
 	server.demoMode = *demoMode
+	server.logBuf = logBuf
 
 	// Register CLI bot if token is provided
 	if *token != "" {

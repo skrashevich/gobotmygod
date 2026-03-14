@@ -31,6 +31,7 @@ type Server struct {
 	webhookPath    string
 	webhookHandler http.HandlerFunc
 	demoMode       bool
+	logBuf         *LogBuffer
 }
 
 func NewServer(store *Store, proxy *ProxyManager) *Server {
@@ -185,6 +186,10 @@ func (s *Server) BuildMux() *http.ServeMux {
 
 	// Message stream (SSE) — auth required
 	mux.HandleFunc("/api/messages/stream", s.authMiddleware(s.handleMessageStream))
+
+	// Application logs — admin only
+	mux.HandleFunc("/api/logs", s.adminOnly(s.handleLogs))
+	mux.HandleFunc("/api/logs/stream", s.adminOnly(s.handleLogStream))
 
 	// Media proxy — auth required
 	mux.HandleFunc("/api/media", s.authMiddleware(s.handleMediaProxy))
@@ -2694,4 +2699,57 @@ func truncateStr(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen] + "..."
+}
+
+// handleLogs returns recent application log entries
+func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
+	if s.logBuf == nil {
+		writeJSON(w, []struct{}{})
+		return
+	}
+	n := 200
+	if v := r.URL.Query().Get("n"); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 && parsed <= 1000 {
+			n = parsed
+		}
+	}
+	writeJSON(w, s.logBuf.Recent(n))
+}
+
+// handleLogStream streams application logs via SSE
+func (s *Server) handleLogStream(w http.ResponseWriter, r *http.Request) {
+	if s.logBuf == nil {
+		http.Error(w, "logging not available", 500)
+		return
+	}
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming not supported", 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+	flusher.Flush()
+
+	ch := s.logBuf.Subscribe()
+	defer s.logBuf.Unsubscribe(ch)
+
+	ctx := r.Context()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case entry := <-ch:
+			data, err := json.Marshal(entry)
+			if err != nil {
+				continue
+			}
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
+		}
+	}
 }

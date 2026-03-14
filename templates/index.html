@@ -914,6 +914,7 @@ p, .msg-text { text-wrap: pretty; }
       <div class="sidebar-footer-role" id="footerUserRole"></div>
     </div>
     <div class="sidebar-footer-actions">
+      <button class="btn" onclick="showLogsPanel()" id="logsBtn" style="display:none;color:var(--green);border-color:var(--green);padding:4px 8px;font-size:9px">LOGS</button>
       <button class="btn" onclick="showAPIKeysModal()" id="apiKeysBtn" style="display:none;color:var(--amber);border-color:var(--amber);padding:4px 8px;font-size:9px">API</button>
       <button class="btn" onclick="showUsersModal()" id="usersBtn" style="display:none;color:var(--cyan);border-color:var(--cyan-dim)">USERS</button>
       <button class="btn" onclick="showChangePasswordModal(false)" id="chpwBtn">PWD</button>
@@ -1402,6 +1403,7 @@ function updateAuthUI() {
   const adminOnly = isAdmin();
   document.getElementById('usersBtn').style.display = adminOnly ? '' : 'none';
   document.getElementById('apiKeysBtn').style.display = adminOnly ? '' : 'none';
+  document.getElementById('logsBtn').style.display = adminOnly ? '' : 'none';
   // +ADD bot button and LLM button
   const sectionBtns = document.querySelectorAll('.section-label .btn');
   sectionBtns.forEach(btn => {
@@ -1917,6 +1919,7 @@ const i18n = {
     api_keys: 'API Keys', api_key_unnamed: 'Unnamed key', api_key_created: 'API key created',
     api_key_deleted: 'API key deleted', api_key_confirm_delete: 'Delete this API key?',
     api_key_none: 'No API keys', api_key_last_used: 'Last used', api_key_never_used: 'Never used',
+    logs_title: 'Application Logs', logs_auto_scroll: 'Auto-scroll', logs_clear: 'CLEAR',
     api_key_disable: 'OFF', api_key_enable: 'ON',
     api_key_copy_warning: 'Copy this key now — it won\'t be shown again!',
     create_api_key: 'Create API Key',
@@ -2093,6 +2096,7 @@ const i18n = {
     api_keys: 'API-ключи', api_key_unnamed: 'Без имени', api_key_created: 'API-ключ создан',
     api_key_deleted: 'API-ключ удалён', api_key_confirm_delete: 'Удалить этот API-ключ?',
     api_key_none: 'Нет API-ключей', api_key_last_used: 'Последнее использование', api_key_never_used: 'Не использовался',
+    logs_title: 'Логи приложения', logs_auto_scroll: 'Автопрокрутка', logs_clear: 'ОЧИСТИТЬ',
     api_key_disable: 'ВЫКЛ', api_key_enable: 'ВКЛ',
     api_key_copy_warning: 'Скопируйте ключ сейчас — он больше не будет показан!',
     create_api_key: 'Создать API-ключ',
@@ -3728,9 +3732,9 @@ async function checkBackendHealth() {
   try {
     const result = await api(`/api/bots/health?id=${currentBotID}`);
     if (result.error) {
-      toast(`Backend: ${result.status} — ${result.error}`, 'error');
+      toast(`${result.status}: ${result.error}`, 'error');
     } else {
-      toast(`Backend: ${result.status}`, 'success');
+      toast(`${result.status}`, 'success');
     }
     await loadBots();
     currentBot = allBots.find(b => b.id === currentBotID);
@@ -3854,6 +3858,101 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbo
     </div>
   </div>
 </div>
+
+<!-- Logs Modal (admin only) -->
+<div id="logsModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeLogsPanel()">
+  <div class="modal" style="max-width:800px;height:80vh;display:flex;flex-direction:column">
+    <h3 style="display:flex;align-items:center;justify-content:space-between">
+      <span id="logsPanelTitle">Application Logs</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <label style="font-size:10px;font-weight:normal;display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="logsAutoScroll" checked> <span id="logsAutoScrollLabel">Auto-scroll</span>
+        </label>
+        <button class="btn btn-sm" onclick="clearLogsView()" style="padding:2px 8px;font-size:9px" id="logsClearBtn">CLEAR</button>
+        <button class="btn btn-sm" onclick="closeLogsPanel()" style="padding:2px 8px;font-size:9px">CLOSE</button>
+      </div>
+    </h3>
+    <div id="logsContainer" style="flex:1;overflow-y:auto;background:var(--surface1);border-radius:6px;padding:8px;font-family:var(--ff-mono);font-size:11px;line-height:1.6;white-space:pre-wrap;word-break:break-all"></div>
+  </div>
+</div>
+
+<script>
+let logsEventSource = null;
+
+function showLogsPanel() {
+  document.getElementById('logsModal').style.display = 'flex';
+  document.getElementById('logsContainer').innerHTML = '';
+  document.getElementById('logsPanelTitle').textContent = t('logs_title');
+  document.getElementById('logsAutoScrollLabel').textContent = t('logs_auto_scroll');
+  document.getElementById('logsClearBtn').textContent = t('logs_clear');
+  // Load recent logs first
+  api('/api/logs?n=200').then(entries => {
+    const container = document.getElementById('logsContainer');
+    if (entries && entries.length) {
+      entries.forEach(e => appendLogEntry(e));
+      if (document.getElementById('logsAutoScroll').checked) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+    // Then start SSE stream
+    connectLogStream();
+  }).catch(e => {
+    document.getElementById('logsContainer').textContent = 'Failed to load logs: ' + e.message;
+  });
+}
+
+function closeLogsPanel() {
+  document.getElementById('logsModal').style.display = 'none';
+  disconnectLogStream();
+}
+
+function connectLogStream() {
+  disconnectLogStream();
+  logsEventSource = new EventSource('/api/logs/stream');
+  logsEventSource.onmessage = function(event) {
+    try {
+      const entry = JSON.parse(event.data);
+      appendLogEntry(entry);
+      const container = document.getElementById('logsContainer');
+      if (document.getElementById('logsAutoScroll').checked) {
+        container.scrollTop = container.scrollHeight;
+      }
+    } catch(e) {}
+  };
+  logsEventSource.onerror = function() {
+    // Reconnect handled automatically by EventSource
+  };
+}
+
+function disconnectLogStream() {
+  if (logsEventSource) {
+    logsEventSource.close();
+    logsEventSource = null;
+  }
+}
+
+function appendLogEntry(entry) {
+  const container = document.getElementById('logsContainer');
+  const line = document.createElement('div');
+  const time = new Date(entry.time);
+  const ts = time.toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit'});
+  const msg = entry.message || '';
+  // Color-code by log level patterns
+  let color = 'var(--text2)';
+  if (msg.includes('ERROR') || msg.includes('error') || msg.includes('Failed') || msg.includes('failed')) color = 'var(--red)';
+  else if (msg.includes('Warning') || msg.includes('warning')) color = 'var(--amber)';
+  else if (msg.includes('[demo]') || msg.includes('[bridge]')) color = 'var(--cyan)';
+  line.style.cssText = `color:${color};border-bottom:1px solid var(--surface2);padding:1px 0`;
+  line.innerHTML = `<span style="color:var(--text3)">${esc(ts)}</span> ${esc(msg)}`;
+  container.appendChild(line);
+  // Keep max 2000 lines in DOM
+  while (container.children.length > 2000) container.removeChild(container.firstChild);
+}
+
+function clearLogsView() {
+  document.getElementById('logsContainer').innerHTML = '';
+}
+</script>
 
 </div><!-- /appContainer -->
 

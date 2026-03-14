@@ -67,14 +67,14 @@
   "hotPaths": [
     {
       "path": "templates/index.html",
-      "accessCount": 187,
-      "lastAccessed": 1773316202368,
+      "accessCount": 219,
+      "lastAccessed": 1773321453932,
       "type": "directory"
     },
     {
       "path": "server.go",
-      "accessCount": 152,
-      "lastAccessed": 1773316151767,
+      "accessCount": 161,
+      "lastAccessed": 1773321300374,
       "type": "directory"
     },
     {
@@ -91,20 +91,20 @@
     },
     {
       "path": "CLAUDE.md",
-      "accessCount": 28,
-      "lastAccessed": 1773311457538,
+      "accessCount": 31,
+      "lastAccessed": 1773316495744,
+      "type": "file"
+    },
+    {
+      "path": "main.go",
+      "accessCount": 29,
+      "lastAccessed": 1773321234255,
       "type": "file"
     },
     {
       "path": "bridge.go",
       "accessCount": 28,
       "lastAccessed": 1773316013238,
-      "type": "file"
-    },
-    {
-      "path": "main.go",
-      "accessCount": 25,
-      "lastAccessed": 1773316226770,
       "type": "file"
     },
     {
@@ -115,8 +115,8 @@
     },
     {
       "path": "proxy.go",
-      "accessCount": 14,
-      "lastAccessed": 1773310945994,
+      "accessCount": 18,
+      "lastAccessed": 1773321172922,
       "type": "file"
     },
     {
@@ -213,6 +213,12 @@
       "path": "screenshots/02-dashboard.png",
       "accessCount": 1,
       "lastAccessed": 1773299706106,
+      "type": "file"
+    },
+    {
+      "path": "logbuf.go",
+      "accessCount": 1,
+      "lastAccessed": 1773321206064,
       "type": "file"
     }
   ],
