@@ -554,3 +554,7 @@ func (b *Bot) GetBotInfo() string {
 func (b *Bot) GetBotName() string {
 	return "Bot (@" + b.api.Self.UserName + ")"
 }
+
+func (b *Bot) GetSelfID() int64 {
+	return b.api.Self.ID
+}

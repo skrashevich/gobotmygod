@@ -248,11 +248,16 @@ func (s *Server) handleBotList(w http.ResponseWriter, r *http.Request) {
 	}
 	type BotStatus struct {
 		BotConfig
-		Running bool `json:"running"`
+		Running      bool  `json:"running"`
+		BotTelegramID int64 `json:"bot_telegram_id,omitempty"`
 	}
 	var result []BotStatus
 	for _, b := range bots {
-		result = append(result, BotStatus{BotConfig: b, Running: s.proxy.IsRunning(b.ID)})
+		bs := BotStatus{BotConfig: b, Running: s.proxy.IsRunning(b.ID)}
+		if mb := s.proxy.GetManagedBot(b.ID); mb != nil {
+			bs.BotTelegramID = mb.GetSelfID()
+		}
+		result = append(result, bs)
 	}
 	if result == nil {
 		result = []BotStatus{}

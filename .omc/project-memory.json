@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1773240426798,
+  "lastScanned": 1773465315477,
   "projectRoot": "/Users/svk/Documents/Projects.nosync/gobotmygod",
   "techStack": {
     "languages": [
@@ -44,21 +44,21 @@
     "screenshots": {
       "path": "screenshots",
       "purpose": null,
-      "fileCount": 9,
-      "lastAccessed": 1773240426785,
+      "fileCount": 12,
+      "lastAccessed": 1773465315463,
       "keyFiles": [
-        "01-dashboard.png",
-        "02-bot-detail.png",
-        "03-messages.png",
-        "04-analytics.png",
-        "05-admins.png"
+        "01-login.png",
+        "02-dashboard.png",
+        "03-bot-detail.png",
+        "04-messages.png",
+        "05-analytics.png"
       ]
     },
     "templates": {
       "path": "templates",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1773240426786,
+      "lastAccessed": 1773465315470,
       "keyFiles": [
         "index.html"
       ]
@@ -67,158 +67,38 @@
   "hotPaths": [
     {
       "path": "templates/index.html",
-      "accessCount": 219,
-      "lastAccessed": 1773321453932,
+      "accessCount": 12,
+      "lastAccessed": 1773465509960,
       "type": "directory"
     },
     {
       "path": "server.go",
-      "accessCount": 161,
-      "lastAccessed": 1773321300374,
+      "accessCount": 11,
+      "lastAccessed": 1773465505016,
       "type": "directory"
     },
     {
       "path": "store.go",
-      "accessCount": 56,
-      "lastAccessed": 1773315067642,
-      "type": "file"
-    },
-    {
-      "path": "README.md",
-      "accessCount": 42,
-      "lastAccessed": 1773311415090,
-      "type": "file"
-    },
-    {
-      "path": "CLAUDE.md",
-      "accessCount": 31,
-      "lastAccessed": 1773316495744,
-      "type": "file"
-    },
-    {
-      "path": "main.go",
-      "accessCount": 29,
-      "lastAccessed": 1773321234255,
-      "type": "file"
-    },
-    {
-      "path": "bridge.go",
-      "accessCount": 28,
-      "lastAccessed": 1773316013238,
+      "accessCount": 8,
+      "lastAccessed": 1773465457261,
       "type": "file"
     },
     {
       "path": "bot.go",
-      "accessCount": 19,
-      "lastAccessed": 1773310970681,
-      "type": "directory"
-    },
-    {
-      "path": "proxy.go",
-      "accessCount": 18,
-      "lastAccessed": 1773321172922,
+      "accessCount": 8,
+      "lastAccessed": 1773465502406,
       "type": "file"
     },
     {
       "path": "",
-      "accessCount": 13,
-      "lastAccessed": 1773310956736,
+      "accessCount": 3,
+      "lastAccessed": 1773465367841,
       "type": "directory"
     },
     {
-      "path": "auth.go",
-      "accessCount": 11,
-      "lastAccessed": 1773311125143,
-      "type": "file"
-    },
-    {
-      "path": "take-screenshots.mjs",
-      "accessCount": 8,
-      "lastAccessed": 1773300174204,
-      "type": "file"
-    },
-    {
-      "path": "Dockerfile",
-      "accessCount": 6,
-      "lastAccessed": 1773308380989,
-      "type": "file"
-    },
-    {
-      "path": "slack.go",
-      "accessCount": 5,
-      "lastAccessed": 1773309901749,
-      "type": "file"
-    },
-    {
-      "path": "docker-compose.yml",
-      "accessCount": 4,
-      "lastAccessed": 1773292993825,
-      "type": "file"
-    },
-    {
-      "path": "demo.go",
-      "accessCount": 4,
-      "lastAccessed": 1773316129744,
-      "type": "file"
-    },
-    {
-      "path": "go.mod",
+      "path": "proxy.go",
       "accessCount": 3,
-      "lastAccessed": 1773293995379,
-      "type": "file"
-    },
-    {
-      "path": "llm.go",
-      "accessCount": 2,
-      "lastAccessed": 1773294326456,
-      "type": "file"
-    },
-    {
-      "path": "screenshots/03-bot-detail.png",
-      "accessCount": 2,
-      "lastAccessed": 1773300455006,
-      "type": "file"
-    },
-    {
-      "path": "screenshots/04-messages.png",
-      "accessCount": 2,
-      "lastAccessed": 1773300455534,
-      "type": "file"
-    },
-    {
-      "path": "screenshots/05-analytics.png",
-      "accessCount": 2,
-      "lastAccessed": 1773300455980,
-      "type": "file"
-    },
-    {
-      "path": "screenshots/11-user-management.png",
-      "accessCount": 2,
-      "lastAccessed": 1773300456317,
-      "type": "file"
-    },
-    {
-      "path": ".dockerignore",
-      "accessCount": 1,
-      "lastAccessed": 1773259501721,
-      "type": "file"
-    },
-    {
-      "path": "screenshots/01-login.png",
-      "accessCount": 1,
-      "lastAccessed": 1773299705601,
-      "type": "file"
-    },
-    {
-      "path": "screenshots/02-dashboard.png",
-      "accessCount": 1,
-      "lastAccessed": 1773299706106,
-      "type": "file"
-    },
-    {
-      "path": "logbuf.go",
-      "accessCount": 1,
-      "lastAccessed": 1773321206064,
+      "lastAccessed": 1773465493488,
       "type": "file"
     }
   ],
