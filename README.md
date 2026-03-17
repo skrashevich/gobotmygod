@@ -36,7 +36,9 @@ Give it a bot token — it discovers which chats the bot is in, whether it has a
 
 **Important:** BotMux takes over long polling for every bot it manages. Only one client can poll a bot token at a time (Telegram limitation), so:
 
-- If your bot currently **polls** (`getUpdates`) — stop it and switch the backend to accept webhook-style HTTP POST requests. BotMux will poll Telegram and forward updates to your backend.
+- If your bot currently **polls** (`getUpdates`) — you have two options:
+  1. **Long Polling mode** (recommended, zero code changes) — enable "Long Poll" in bot settings, then point your backend's API base URL to BotMux (`http://botmux:8080/tgapi/`). Your bot keeps calling `getUpdates` as before, but now gets updates from BotMux instead of Telegram.
+  2. **Push mode** — switch the backend to accept webhook-style HTTP POST requests. BotMux will poll Telegram and forward updates to your backend URL.
 - If your bot already uses **webhooks** — BotMux will switch it to polling and proxy updates back to the webhook endpoint. No changes needed on the backend side.
 
 This applies to **all modes** — monitoring, admin actions, and reverse proxy all require BotMux to own the polling loop.
@@ -49,12 +51,23 @@ This applies to **all modes** — monitoring, admin actions, and reverse proxy a
 - Each bot can operate in **Management** mode (chat tracking, admin actions), **Proxy** mode (reverse proxy to legacy webhook bots), or both simultaneously
 - Per-bot status monitoring, health checks, and configuration
 
-### Reverse Proxy
+### Reverse Proxy (Push mode)
 - Poll Telegram for updates via long polling and forward them as webhook POST requests to legacy bot backends
 - Supports `X-Telegram-Bot-Api-Secret-Token` header for backend authentication
 - Proxies webhook-style responses back to Telegram API (if backend responds with JSON containing a `method` field)
 - Periodic backend health monitoring (every 60s) with status visible in the dashboard
 - Manual health check button in the web UI
+
+### Long Polling (Pull mode)
+- External bots/backends can pull raw Telegram updates directly from BotMux instead of Telegram
+- **Telegram-compatible**: backends call `getUpdates` via the API proxy (`/tgapi/bot{TOKEN}/getUpdates`) — no code changes needed, just change the API base URL
+- Response format identical to Telegram: `{"ok": true, "result": [...]}`
+- Supports `offset`, `limit` (max 100), and `timeout` (max 60s) parameters — same semantics as Telegram's `getUpdates`
+- Enable per bot via the "Long Poll" toggle in bot settings
+- In-memory ring buffer (1000 updates per bot) with waiter notification for efficient long polling
+- Multiple clients can poll the same bot simultaneously
+- Works alongside push proxy — both can be active for the same bot
+- Also available via authenticated API: `GET /api/updates/poll?bot_id=X` (Bearer API key or session cookie)
 
 ### Message Monitoring
 - Real-time collection of all messages and channel posts the bot can see
@@ -405,6 +418,44 @@ The backend can respond with a [webhook-style reply](https://core.telegram.org/b
 
 Use **CHECK WEBHOOK** button in the bot detail view to verify the backend is reachable. Health is also monitored automatically every 60 seconds.
 
+## Long Polling Setup
+
+To use BotMux as a `getUpdates` source for an existing polling bot:
+
+1. Add or edit the bot in the web UI
+2. Enable the **Long Poll** toggle in bot settings
+3. Save — BotMux will start buffering raw Telegram updates for this bot
+4. In your backend, change the Telegram API base URL:
+
+```
+# Before (direct to Telegram)
+https://api.telegram.org/bot{TOKEN}/getUpdates
+
+# After (via BotMux)
+http://localhost:8080/tgapi/bot{TOKEN}/getUpdates
+```
+
+That's it — no other code changes needed. Your backend calls `getUpdates` with the same parameters (`offset`, `limit`, `timeout`) and gets the same response format. BotMux acts as a transparent intermediary.
+
+**How it works:**
+
+```
+Telegram ──getUpdates──> BotMux (polls Telegram)
+                            │
+                            ├── saves to UpdateQueue (ring buffer, 1000 updates)
+                            ├── Management: tracks chats/messages in DB
+                            │
+Backend ──getUpdates──> /tgapi/ (long poll) ──> returns from UpdateQueue
+Backend ──sendMessage──> /tgapi/ (proxy) ──> Telegram API
+```
+
+**Notes:**
+- No additional authentication required — the bot token in the URL is the authorization (same as Telegram API)
+- Multiple backends can poll the same bot simultaneously
+- Push proxy and long polling can be active at the same time for the same bot
+- If your backend also sends messages, point those at `/tgapi/` too — see [Capturing Bot Replies](#capturing-bot-replies-api-proxy)
+- The authenticated endpoint `GET /api/updates/poll?bot_id=X&timeout=T` is also available for programmatic access from the web UI or scripts
+
 ### Capturing Bot Replies (API Proxy)
 
 By default, messages sent by the backend directly via the Telegram API (e.g., `sendMessage`) are not visible to botmux — Telegram does not include a bot's own outgoing messages in `getUpdates`.
@@ -444,9 +495,13 @@ botmux/
 Telegram ──getUpdates──> ProxyManager (polling loop per bot)
                             │
                             ├── Management: trackChat() / saveMessage() ──> SQLite
-                            ├── Proxy: POST update ──> Backend URL
-                            │                │
-                            │                └── webhook reply ──> Telegram API
+                            ├── Proxy (push): POST update ──> Backend URL
+                            │                    │
+                            │                    └── webhook reply ──> Telegram API
+                            │
+                            ├── Long Poll: enqueue ──> UpdateQueue (ring buffer)
+                            │                              │
+                            │            Backend ──getUpdates──> /tgapi/ ──> dequeue
                             │
                             ├── Routing: match rules ──> send via Target Bot ──> Telegram
                             │                │
@@ -560,11 +615,18 @@ All endpoints return JSON. Errors return `{"error": "message"}` with HTTP 500. M
 | POST | `/api/routes/update` | Update route (JSON body with `id`) |
 | POST | `/api/routes/delete?id=` | Delete route |
 
+### Long Polling
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/updates/poll?bot_id=&offset=&limit=&timeout=` | Poll for updates (auth required) |
+
 ### Telegram API Proxy
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | ANY | `/tgapi/bot{TOKEN}/{method}` | Proxies to `api.telegram.org`, captures sent messages |
+| GET/POST | `/tgapi/bot{TOKEN}/getUpdates` | Returns updates from BotMux queue (if long poll enabled) |
 
 ## Bot Setup
 

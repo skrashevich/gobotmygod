@@ -1486,6 +1486,7 @@ body::before { display: none; }
     <div class="modal-perms" style="margin:14px 0;gap:12px">
       <label class="modal-perm"><input type="checkbox" id="botFormManage" checked onchange="toggleProxyFields()"> Management (track chats, messages, users)</label>
       <label class="modal-perm"><input type="checkbox" id="botFormProxy" onchange="toggleProxyFields()"> Reverse Proxy (forward updates to webhook)</label>
+      <label class="modal-perm"><input type="checkbox" id="botFormLongPoll"> Long Poll (allow external clients to pull updates)</label>
     </div>
     <div id="botModeHint" style="font-family:var(--ff-mono);font-size:10px;color:var(--text3);margin:-8px 0 10px 0"></div>
     <div id="proxyFields" style="display:none">
@@ -2162,9 +2163,10 @@ const i18n = {
     running: 'RUNNING', stopped: 'STOPPED', error: 'ERROR',
     enabled: 'ENABLED', disabled: 'Disabled',
     source_cli: 'CLI (startup token)', source_web: 'Web UI',
-    username: 'Username', source: 'Source', management_label: 'Management', proxy_label: 'Proxy',
+    username: 'Username', source: 'Source', management_label: 'Management', proxy_label: 'Proxy', long_poll_label: 'Long Poll',
     backend_url: 'Backend URL', forwarded: 'Forwarded', backend_health: 'Backend Health',
     api_proxy_url: 'API Proxy URL', api_proxy_hint: 'Set as API base URL in backend to capture bot replies',
+    long_poll_url: 'Long Poll URL', long_poll_hint: 'Use this URL to pull updates (Telegram getUpdates format)',
     offset: 'Offset', polling_timeout: 'Polling Timeout', last_activity: 'Last Activity', last_error: 'Last Error',
     // tabs
     tab_messages: 'Messages', tab_analytics: 'Analytics', tab_admins: 'Admins',
@@ -2341,9 +2343,10 @@ const i18n = {
     running: 'РАБОТАЕТ', stopped: 'ОСТАНОВЛЕН', error: 'ОШИБКА',
     enabled: 'ВКЛЮЧЕНО', disabled: 'Отключено',
     source_cli: 'CLI (токен при запуске)', source_web: 'Веб-интерфейс',
-    username: 'Имя пользователя', source: 'Источник', management_label: 'Управление', proxy_label: 'Прокси',
+    username: 'Имя пользователя', source: 'Источник', management_label: 'Управление', proxy_label: 'Прокси', long_poll_label: 'Long Poll',
     backend_url: 'Backend URL', forwarded: 'Перенаправлено', backend_health: 'Статус бэкенда',
     api_proxy_url: 'API Proxy URL', api_proxy_hint: 'Укажите как base URL в бэкенде для перехвата ответов бота',
+    long_poll_url: 'Long Poll URL', long_poll_hint: 'Используйте этот URL для получения обновлений (формат Telegram getUpdates)',
     offset: 'Смещение', polling_timeout: 'Таймаут опроса', last_activity: 'Последняя активность', last_error: 'Последняя ошибка',
     // tabs
     tab_messages: 'Сообщения', tab_analytics: 'Аналитика', tab_admins: 'Админы',
@@ -2893,6 +2896,7 @@ function renderBotList() {
     const badges = [];
     if (b.manage_enabled) badges.push('<span class="badge badge-admin" style="font-size:8px;padding:0 4px">MGR</span>');
     if (b.proxy_enabled) badges.push('<span class="badge badge-proxy" style="font-size:8px;padding:0 4px">PRX</span>');
+    if (b.long_poll_enabled) badges.push('<span class="badge" style="font-size:8px;padding:0 4px;background:var(--cyan-dim);color:var(--cyan)">POLL</span>');
     return `
       <div class="bot-item ${b.id === currentBotID ? 'active' : ''}" onclick="selectBot(${b.id})">
         <span class="status-dot ${statusClass}"></span>
@@ -2942,6 +2946,7 @@ function showBotDetail() {
   const badges = [];
   if (b.manage_enabled) badges.push(`<span class="badge badge-admin">${t('management')}</span>`);
   if (b.proxy_enabled) badges.push(`<span class="badge badge-proxy">${t('proxy')}</span>`);
+  if (b.long_poll_enabled) badges.push(`<span class="badge" style="background:var(--cyan-dim);color:var(--cyan)">Long Poll</span>`);
   const statusClass = b.last_error ? 'status-error' : (b.running ? 'status-running' : 'status-stopped');
   const statusText = b.last_error ? t('error') : (b.running ? t('running') : t('stopped'));
   badges.push(`<span class="badge badge-group"><span class="status-dot ${statusClass}" style="margin-right:4px;vertical-align:middle"></span>${statusText}</span>`);
@@ -2962,6 +2967,7 @@ function showBotDetail() {
     [t('source'), b.source === 'cli' ? t('source_cli') : t('source_web')],
     [t('management_label'), b.manage_enabled ? `<span style="color:var(--green)">${t('enabled')}</span>` : t('disabled')],
     [t('proxy_label'), b.proxy_enabled ? `<span style="color:var(--green)">${t('enabled')}</span>` : t('disabled')],
+    [t('long_poll_label'), b.long_poll_enabled ? `<span style="color:var(--green)">${t('enabled')}</span>` : t('disabled')],
   ];
   if (b.proxy_enabled) {
     rows.push([t('backend_url'), `<span style="font-family:var(--ff-mono);font-size:11px;word-break:break-all">${esc(b.backend_url)}</span>`]);
@@ -2974,6 +2980,10 @@ function showBotDetail() {
     }
     const apiProxyURL = `${location.origin}/tgapi/`;
     rows.push([t('api_proxy_url'), `<span style="font-family:var(--ff-mono);font-size:11px;word-break:break-all;cursor:pointer;border-bottom:1px dashed var(--cyan-dim)" onclick="navigator.clipboard.writeText('${apiProxyURL}');this.style.color='var(--green)';setTimeout(()=>this.style.color='',1000)" title="Click to copy">${esc(apiProxyURL)}</span><br><span style="color:var(--text3);font-size:10px">${t('api_proxy_hint')}</span>`]);
+  }
+  if (b.long_poll_enabled) {
+    const pollURL = `${location.origin}/api/updates/poll?bot_id=${b.id}&timeout=30`;
+    rows.push([t('long_poll_url'), `<span style="font-family:var(--ff-mono);font-size:11px;word-break:break-all;cursor:pointer;border-bottom:1px dashed var(--cyan-dim)" onclick="navigator.clipboard.writeText('${pollURL}');this.style.color='var(--green)';setTimeout(()=>this.style.color='',1000)" title="Click to copy">${esc(pollURL)}</span><br><span style="color:var(--text3);font-size:10px">${t('long_poll_hint')}</span>`]);
   }
   rows.push([t('offset'), b.offset]);
   rows.push([t('polling_timeout'), b.polling_timeout + 's']);
@@ -4102,6 +4112,7 @@ function showBotModal(bot = null) {
   document.getElementById('botFormToken').value = bot ? bot.token : '';
   document.getElementById('botFormManage').checked = bot ? bot.manage_enabled : true;
   document.getElementById('botFormProxy').checked = bot ? bot.proxy_enabled : false;
+  document.getElementById('botFormLongPoll').checked = bot ? bot.long_poll_enabled : false;
   document.getElementById('botFormBackendURL').value = bot ? bot.backend_url : '';
   document.getElementById('botFormSecretToken').value = bot ? bot.secret_token : '';
   document.getElementById('botFormTimeout').value = bot ? bot.polling_timeout : 30;
@@ -4151,6 +4162,7 @@ async function saveBot() {
     bot_username: botTokenUsername,
     manage_enabled: document.getElementById('botFormManage').checked,
     proxy_enabled: document.getElementById('botFormProxy').checked,
+    long_poll_enabled: document.getElementById('botFormLongPoll').checked,
     backend_url: document.getElementById('botFormBackendURL').value.trim(),
     secret_token: document.getElementById('botFormSecretToken').value.trim(),
     polling_timeout: parseInt(document.getElementById('botFormTimeout').value) || 30,

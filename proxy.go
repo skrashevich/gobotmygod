@@ -17,15 +17,122 @@ import (
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
+// UpdateQueue is an in-memory ring buffer of raw Telegram updates for long-poll consumers.
+type UpdateQueue struct {
+	mu      sync.Mutex
+	updates []QueuedUpdate
+	maxSize int
+	waiters []chan struct{}
+}
+
+// QueuedUpdate holds a single raw Telegram update with its update_id.
+type QueuedUpdate struct {
+	UpdateID int64
+	Data     map[string]interface{}
+}
+
+// NewUpdateQueue creates a queue with the given max capacity.
+func NewUpdateQueue(maxSize int) *UpdateQueue {
+	return &UpdateQueue{
+		updates: make([]QueuedUpdate, 0, maxSize),
+		maxSize: maxSize,
+	}
+}
+
+// Enqueue adds a raw update to the queue, evicting the oldest if full, and wakes all waiters.
+func (q *UpdateQueue) Enqueue(rawUpdate map[string]interface{}) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	updateID, _ := rawUpdate["update_id"].(float64)
+	q.updates = append(q.updates, QueuedUpdate{
+		UpdateID: int64(updateID),
+		Data:     rawUpdate,
+	})
+	if len(q.updates) > q.maxSize {
+		q.updates = q.updates[len(q.updates)-q.maxSize:]
+	}
+
+	// Wake all blocked long-poll waiters
+	for _, ch := range q.waiters {
+		select {
+		case ch <- struct{}{}:
+		default:
+		}
+	}
+	q.waiters = q.waiters[:0]
+}
+
+// Get returns updates with UpdateID >= offset, up to limit.
+func (q *UpdateQueue) Get(offset int64, limit int) []QueuedUpdate {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	var result []QueuedUpdate
+	for _, u := range q.updates {
+		if u.UpdateID >= offset {
+			result = append(result, u)
+			if len(result) >= limit {
+				break
+			}
+		}
+	}
+	return result
+}
+
+// Wait returns a channel that will be signalled when new updates arrive.
+// The caller should also select on ctx.Done() and a timer for timeout.
+func (q *UpdateQueue) Wait(ctx context.Context) <-chan struct{} {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	ch := make(chan struct{}, 1)
+	q.waiters = append(q.waiters, ch)
+
+	// If context is already cancelled, signal immediately
+	go func() {
+		<-ctx.Done()
+		q.mu.Lock()
+		defer q.mu.Unlock()
+		for i, w := range q.waiters {
+			if w == ch {
+				q.waiters = append(q.waiters[:i], q.waiters[i+1:]...)
+				select {
+				case ch <- struct{}{}:
+				default:
+				}
+				break
+			}
+		}
+	}()
+
+	return ch
+}
+
+// WaiterCount returns the number of clients currently blocked waiting for updates.
+func (q *UpdateQueue) WaiterCount() int {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return len(q.waiters)
+}
+
+// QueueDepth returns the number of buffered updates.
+func (q *UpdateQueue) QueueDepth() int {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return len(q.updates)
+}
+
 // ProxyManager manages polling and forwarding for all bots
 type ProxyManager struct {
-	store       *Store
-	mu          sync.Mutex
-	runners     map[int64]*proxyRunner
-	managedBots map[int64]*Bot // botID -> Bot instance for management processing
-	webhookBots map[int64]bool // bots receiving updates via webhook (skip polling)
-	client      *http.Client
-	llmRouter   *LLMRouter // LLM-based routing
+	store        *Store
+	mu           sync.Mutex
+	runners      map[int64]*proxyRunner
+	managedBots  map[int64]*Bot          // botID -> Bot instance for management processing
+	webhookBots  map[int64]bool          // bots receiving updates via webhook (skip polling)
+	updateQueues map[int64]*UpdateQueue  // botID -> long-poll update queue (lazy init)
+	client       *http.Client
+	llmRouter    *LLMRouter // LLM-based routing
 }
 
 type proxyRunner struct {
@@ -35,13 +142,55 @@ type proxyRunner struct {
 
 func NewProxyManager(store *Store) *ProxyManager {
 	return &ProxyManager{
-		store:       store,
-		runners:     make(map[int64]*proxyRunner),
-		managedBots: make(map[int64]*Bot),
-		webhookBots: make(map[int64]bool),
-		client:      &http.Client{Timeout: 120 * time.Second},
-		llmRouter:   NewLLMRouter(store),
+		store:        store,
+		runners:      make(map[int64]*proxyRunner),
+		managedBots:  make(map[int64]*Bot),
+		webhookBots:  make(map[int64]bool),
+		updateQueues: make(map[int64]*UpdateQueue),
+		client:       &http.Client{Timeout: 120 * time.Second},
+		llmRouter:    NewLLMRouter(store),
 	}
+}
+
+// GetOrCreateUpdateQueue returns (or lazily creates) the update queue for a bot.
+func (pm *ProxyManager) GetOrCreateUpdateQueue(botID int64) *UpdateQueue {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	q, ok := pm.updateQueues[botID]
+	if !ok {
+		q = NewUpdateQueue(1000)
+		pm.updateQueues[botID] = q
+	}
+	return q
+}
+
+// EnqueueUpdate adds a raw update to the bot's long-poll queue (if it exists).
+func (pm *ProxyManager) EnqueueUpdate(botID int64, rawUpdate map[string]interface{}) {
+	pm.mu.Lock()
+	q := pm.updateQueues[botID]
+	pm.mu.Unlock()
+	if q != nil {
+		q.Enqueue(rawUpdate)
+	}
+}
+
+// GetQueueStats returns the number of waiting clients and queue depth for a bot.
+// Returns (0, 0) if no queue exists.
+func (pm *ProxyManager) GetQueueStats(botID int64) (waiters int, depth int) {
+	pm.mu.Lock()
+	q := pm.updateQueues[botID]
+	pm.mu.Unlock()
+	if q == nil {
+		return 0, 0
+	}
+	return q.WaiterCount(), q.QueueDepth()
+}
+
+// RemoveUpdateQueue removes and discards the update queue for a bot.
+func (pm *ProxyManager) RemoveUpdateQueue(botID int64) {
+	pm.mu.Lock()
+	delete(pm.updateQueues, botID)
+	pm.mu.Unlock()
 }
 
 // RegisterManagedBot registers a Bot instance for management processing
@@ -105,6 +254,11 @@ func (pm *ProxyManager) processUpdate(botID int64, rawUpdate map[string]interfac
 	if err != nil {
 		log.Printf("[proxy] processUpdate: failed to get config for botID=%d: %v", botID, err)
 		return
+	}
+
+	// Enqueue for long-poll consumers (before any other processing)
+	if bot.LongPollEnabled {
+		pm.EnqueueUpdate(botID, rawUpdate)
 	}
 
 	updateID, _ := rawUpdate["update_id"].(float64)
@@ -376,6 +530,11 @@ func (pm *ProxyManager) pollLoop(ctx context.Context, botID int64) {
 
 			updateSummary := summarizeUpdate(update)
 			log.Printf("[proxy] pollLoop: botID=%d processing %s", botID, updateSummary)
+
+			// Long poll queue: enqueue for pull-based consumers
+			if bot.LongPollEnabled {
+				pm.EnqueueUpdate(botID, update)
+			}
 
 			// Proxy: forward to backend
 			if bot.ProxyEnabled && bot.BackendURL != "" {

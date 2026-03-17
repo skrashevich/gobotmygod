@@ -185,6 +185,9 @@ func (s *Server) BuildMux() *http.ServeMux {
 	mux.HandleFunc("/api/llm-config/save", s.adminOnly(s.handleSaveLLMConfig))
 	mux.HandleFunc("/api/bots/description", s.authMiddleware(s.handleBotDescription))
 
+	// Long polling for updates — auth required
+	mux.HandleFunc("/api/updates/poll", s.authMiddleware(s.handleUpdatesPoll))
+
 	// Message stream (SSE) — auth required
 	mux.HandleFunc("/api/messages/stream", s.authMiddleware(s.handleMessageStream))
 
@@ -619,6 +622,140 @@ func (s *Server) handleMessageStream(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()
 		}
+	}
+}
+
+// handleUpdatesPoll serves raw Telegram updates via long polling (pull mode).
+// Compatible with Telegram Bot API getUpdates response format.
+// @Summary Long poll for updates
+// @Description Returns raw Telegram updates for a bot using long polling. Response format is compatible with Telegram getUpdates.
+// @Tags updates
+// @Produce json
+// @Param bot_id query int true "Bot ID"
+// @Param offset query int false "Return updates with update_id >= offset"
+// @Param limit query int false "Max updates to return (default 100, max 100)"
+// @Param timeout query int false "Long polling timeout in seconds (default 0, max 60)"
+// @Success 200 {object} map[string]interface{} "Telegram-compatible response: {ok: true, result: [...]}"
+// @Failure 400 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Router /api/updates/poll [get]
+// @Security CookieAuth || BearerAuth
+func (s *Server) handleUpdatesPoll(w http.ResponseWriter, r *http.Request) {
+	botID, err := strconv.ParseInt(r.URL.Query().Get("bot_id"), 10, 64)
+	if err != nil || botID == 0 {
+		w.WriteHeader(400)
+		writeJSON(w, map[string]interface{}{"ok": false, "description": "bot_id is required"})
+		return
+	}
+
+	if !s.checkBotAccess(r, botID) {
+		w.WriteHeader(403)
+		writeJSON(w, map[string]interface{}{"ok": false, "description": "Forbidden"})
+		return
+	}
+
+	botCfg, err := s.store.GetBotConfig(botID)
+	if err != nil {
+		w.WriteHeader(404)
+		writeJSON(w, map[string]interface{}{"ok": false, "description": "bot not found"})
+		return
+	}
+	if !botCfg.LongPollEnabled {
+		w.WriteHeader(400)
+		writeJSON(w, map[string]interface{}{"ok": false, "description": "long polling is not enabled for this bot"})
+		return
+	}
+
+	s.handleLongPollGetUpdates(w, r, botCfg)
+}
+
+// longPollResponse formats updates in Telegram-compatible getUpdates response format.
+func longPollResponse(updates []QueuedUpdate) map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(updates))
+	for _, u := range updates {
+		result = append(result, u.Data)
+	}
+	return map[string]interface{}{
+		"ok":     true,
+		"result": result,
+	}
+}
+
+// handleLongPollGetUpdates serves updates from UpdateQueue for /tgapi/bot{TOKEN}/getUpdates.
+// No auth required — the bot token in the URL is the authorization (same as Telegram API).
+func (s *Server) handleLongPollGetUpdates(w http.ResponseWriter, r *http.Request, botCfg *BotConfig) {
+	// Parse params from query string (GET) or form body (POST) — Telegram supports both
+	var offsetStr, limitStr, timeoutStr string
+	if r.Method == http.MethodPost {
+		// Try JSON body first, then form values
+		if r.Header.Get("Content-Type") == "application/json" {
+			var body map[string]interface{}
+			if json.NewDecoder(r.Body).Decode(&body) == nil {
+				if v, ok := body["offset"]; ok {
+					offsetStr = fmt.Sprintf("%v", v)
+				}
+				if v, ok := body["limit"]; ok {
+					limitStr = fmt.Sprintf("%v", v)
+				}
+				if v, ok := body["timeout"]; ok {
+					timeoutStr = fmt.Sprintf("%v", v)
+				}
+			}
+		} else {
+			r.ParseForm()
+			offsetStr = r.FormValue("offset")
+			limitStr = r.FormValue("limit")
+			timeoutStr = r.FormValue("timeout")
+		}
+	}
+	// Query params take precedence (or fallback for GET)
+	if v := r.URL.Query().Get("offset"); v != "" {
+		offsetStr = v
+	}
+	if v := r.URL.Query().Get("limit"); v != "" {
+		limitStr = v
+	}
+	if v := r.URL.Query().Get("timeout"); v != "" {
+		timeoutStr = v
+	}
+
+	offset, _ := strconv.ParseInt(offsetStr, 10, 64)
+	limit, _ := strconv.Atoi(limitStr)
+	timeout, _ := strconv.Atoi(timeoutStr)
+
+	if limit <= 0 || limit > 100 {
+		limit = 100
+	}
+	if timeout < 0 {
+		timeout = 0
+	}
+	if timeout > 60 {
+		timeout = 60
+	}
+
+	queue := s.proxy.GetOrCreateUpdateQueue(botCfg.ID)
+
+	updates := queue.Get(offset, limit)
+	if len(updates) > 0 || timeout == 0 {
+		writeJSON(w, longPollResponse(updates))
+		return
+	}
+
+	ctx := r.Context()
+	timer := time.NewTimer(time.Duration(timeout) * time.Second)
+	defer timer.Stop()
+	notify := queue.Wait(ctx)
+
+	select {
+	case <-ctx.Done():
+		writeJSON(w, longPollResponse(nil))
+	case <-timer.C:
+		updates = queue.Get(offset, limit)
+		writeJSON(w, longPollResponse(updates))
+	case <-notify:
+		time.Sleep(50 * time.Millisecond)
+		updates = queue.Get(offset, limit)
+		writeJSON(w, longPollResponse(updates))
 	}
 }
 
@@ -2246,6 +2383,14 @@ func (s *Server) handleTelegramAPIProxy(w http.ResponseWriter, r *http.Request) 
 
 	botToken := strings.TrimPrefix(parts[0], "bot")
 	method := parts[1]
+
+	// Intercept getUpdates for bots with long_poll_enabled
+	if method == "getUpdates" {
+		if botCfg, err := s.store.GetBotConfigByToken(botToken); err == nil && botCfg.LongPollEnabled {
+			s.handleLongPollGetUpdates(w, r, botCfg)
+			return
+		}
+	}
 
 	// Read request body
 	reqBody, err := io.ReadAll(r.Body)

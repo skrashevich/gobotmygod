@@ -33,6 +33,7 @@ type BotConfig struct {
 	Source            string `json:"source"` // "cli" or "web"
 	BackendStatus     string `json:"backend_status"`
 	BackendCheckedAt  string `json:"backend_checked_at"`
+	LongPollEnabled   bool   `json:"long_poll_enabled"`
 }
 
 type Chat struct {
@@ -404,6 +405,13 @@ func (s *Store) migrate() error {
 		return err
 	}
 
+	// Add long_poll_enabled column to bots if missing
+	var hasLongPoll int
+	s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('bots') WHERE name='long_poll_enabled'`).Scan(&hasLongPoll)
+	if hasLongPoll == 0 {
+		s.db.Exec(`ALTER TABLE bots ADD COLUMN long_poll_enabled INTEGER NOT NULL DEFAULT 0`)
+	}
+
 	// Add description column to bots if missing
 	var hasDescription int
 	s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('bots') WHERE name='description'`).Scan(&hasDescription)
@@ -553,9 +561,9 @@ func (s *Store) MigrateLegacyChats(botID int64) {
 
 func (s *Store) AddBotConfig(b BotConfig) (int64, error) {
 	res, err := s.db.Exec(`
-		INSERT INTO bots (name, token, bot_username, manage_enabled, proxy_enabled, backend_url, secret_token, polling_timeout, source)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web')
-	`, b.Name, b.Token, b.BotUsername, b.ManageEnabled, b.ProxyEnabled, b.BackendURL, b.SecretToken, b.PollingTimeout)
+		INSERT INTO bots (name, token, bot_username, manage_enabled, proxy_enabled, backend_url, secret_token, polling_timeout, long_poll_enabled, source)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'web')
+	`, b.Name, b.Token, b.BotUsername, b.ManageEnabled, b.ProxyEnabled, b.BackendURL, b.SecretToken, b.PollingTimeout, b.LongPollEnabled)
 	if err != nil {
 		return 0, err
 	}
@@ -564,9 +572,9 @@ func (s *Store) AddBotConfig(b BotConfig) (int64, error) {
 
 func (s *Store) UpdateBotConfig(b BotConfig) error {
 	_, err := s.db.Exec(`
-		UPDATE bots SET name=?, token=?, bot_username=?, manage_enabled=?, proxy_enabled=?, backend_url=?, secret_token=?, polling_timeout=?
+		UPDATE bots SET name=?, token=?, bot_username=?, manage_enabled=?, proxy_enabled=?, backend_url=?, secret_token=?, polling_timeout=?, long_poll_enabled=?
 		WHERE id=?
-	`, b.Name, b.Token, b.BotUsername, b.ManageEnabled, b.ProxyEnabled, b.BackendURL, b.SecretToken, b.PollingTimeout, b.ID)
+	`, b.Name, b.Token, b.BotUsername, b.ManageEnabled, b.ProxyEnabled, b.BackendURL, b.SecretToken, b.PollingTimeout, b.LongPollEnabled, b.ID)
 	return err
 }
 
@@ -576,7 +584,7 @@ func (s *Store) DeleteBotConfig(id int64) error {
 }
 
 func (s *Store) GetBotConfigs() ([]BotConfig, error) {
-	rows, err := s.db.Query(`SELECT id, name, token, bot_username, manage_enabled, proxy_enabled, backend_url, secret_token, polling_timeout, offset_id, last_error, last_activity, updates_forwarded, source, backend_status, backend_checked_at FROM bots ORDER BY source DESC, name`)
+	rows, err := s.db.Query(`SELECT id, name, token, bot_username, manage_enabled, proxy_enabled, backend_url, secret_token, polling_timeout, offset_id, last_error, last_activity, updates_forwarded, source, backend_status, backend_checked_at, long_poll_enabled FROM bots ORDER BY source DESC, name`)
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +593,7 @@ func (s *Store) GetBotConfigs() ([]BotConfig, error) {
 	var bots []BotConfig
 	for rows.Next() {
 		var b BotConfig
-		if err := rows.Scan(&b.ID, &b.Name, &b.Token, &b.BotUsername, &b.ManageEnabled, &b.ProxyEnabled, &b.BackendURL, &b.SecretToken, &b.PollingTimeout, &b.Offset, &b.LastError, &b.LastActivity, &b.UpdatesForwarded, &b.Source, &b.BackendStatus, &b.BackendCheckedAt); err != nil {
+		if err := rows.Scan(&b.ID, &b.Name, &b.Token, &b.BotUsername, &b.ManageEnabled, &b.ProxyEnabled, &b.BackendURL, &b.SecretToken, &b.PollingTimeout, &b.Offset, &b.LastError, &b.LastActivity, &b.UpdatesForwarded, &b.Source, &b.BackendStatus, &b.BackendCheckedAt, &b.LongPollEnabled); err != nil {
 			return nil, err
 		}
 		bots = append(bots, b)
@@ -595,8 +603,18 @@ func (s *Store) GetBotConfigs() ([]BotConfig, error) {
 
 func (s *Store) GetBotConfig(id int64) (*BotConfig, error) {
 	var b BotConfig
-	err := s.db.QueryRow(`SELECT id, name, token, bot_username, manage_enabled, proxy_enabled, backend_url, secret_token, polling_timeout, offset_id, last_error, last_activity, updates_forwarded, source, backend_status, backend_checked_at FROM bots WHERE id=?`, id).
-		Scan(&b.ID, &b.Name, &b.Token, &b.BotUsername, &b.ManageEnabled, &b.ProxyEnabled, &b.BackendURL, &b.SecretToken, &b.PollingTimeout, &b.Offset, &b.LastError, &b.LastActivity, &b.UpdatesForwarded, &b.Source, &b.BackendStatus, &b.BackendCheckedAt)
+	err := s.db.QueryRow(`SELECT id, name, token, bot_username, manage_enabled, proxy_enabled, backend_url, secret_token, polling_timeout, offset_id, last_error, last_activity, updates_forwarded, source, backend_status, backend_checked_at, long_poll_enabled FROM bots WHERE id=?`, id).
+		Scan(&b.ID, &b.Name, &b.Token, &b.BotUsername, &b.ManageEnabled, &b.ProxyEnabled, &b.BackendURL, &b.SecretToken, &b.PollingTimeout, &b.Offset, &b.LastError, &b.LastActivity, &b.UpdatesForwarded, &b.Source, &b.BackendStatus, &b.BackendCheckedAt, &b.LongPollEnabled)
+	if err != nil {
+		return nil, err
+	}
+	return &b, nil
+}
+
+func (s *Store) GetBotConfigByToken(token string) (*BotConfig, error) {
+	var b BotConfig
+	err := s.db.QueryRow(`SELECT id, name, token, bot_username, manage_enabled, proxy_enabled, backend_url, secret_token, polling_timeout, offset_id, last_error, last_activity, updates_forwarded, source, backend_status, backend_checked_at, long_poll_enabled FROM bots WHERE token=?`, token).
+		Scan(&b.ID, &b.Name, &b.Token, &b.BotUsername, &b.ManageEnabled, &b.ProxyEnabled, &b.BackendURL, &b.SecretToken, &b.PollingTimeout, &b.Offset, &b.LastError, &b.LastActivity, &b.UpdatesForwarded, &b.Source, &b.BackendStatus, &b.BackendCheckedAt, &b.LongPollEnabled)
 	if err != nil {
 		return nil, err
 	}
