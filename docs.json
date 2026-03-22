@@ -10,195 +10,204 @@
   "colors": {
     "primary": "#2563EB",
     "light": "#60A5FA",
-    "dark": "#1D4ED8",
-    "anchors": {
-      "from": "#2563EB",
-      "to": "#7C3AED"
+    "dark": "#1D4ED8"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Demo",
+        "href": "https://botmux.svk.su"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "GitHub",
+      "href": "https://github.com/skrashevich/botmux"
     }
   },
-  "topbarLinks": [
-    {
-      "name": "Demo",
-      "url": "https://botmux.svk.su"
-    }
-  ],
-  "topbarCtaButton": {
-    "name": "GitHub",
-    "url": "https://github.com/skrashevich/botmux"
+  "navigation": {
+    "dropdowns": [
+      {
+        "dropdown": "Documentation",
+        "icon": "book",
+        "description": "Learn how to use BotMux",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "index",
+              "quickstart",
+              "installation",
+              "docker"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/how-it-works",
+              "concepts/multi-bot",
+              "concepts/bot-setup"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/reverse-proxy",
+              "features/long-polling",
+              "features/api-proxy",
+              "features/message-monitoring",
+              "features/analytics",
+              "features/admin-actions",
+              "features/user-tags",
+              "features/audit-log",
+              "features/media-support",
+              "features/i18n"
+            ]
+          },
+          {
+            "group": "Routing",
+            "pages": [
+              "routing/inter-bot-routing",
+              "routing/llm-routing",
+              "routing/source-nat"
+            ]
+          },
+          {
+            "group": "Bridges",
+            "pages": [
+              "bridges/overview",
+              "bridges/slack",
+              "bridges/webhook"
+            ]
+          },
+          {
+            "group": "Authentication",
+            "pages": [
+              "auth/overview",
+              "auth/users-and-roles",
+              "auth/api-keys"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/cli-flags",
+              "configuration/environment-variables",
+              "configuration/custom-telegram-api",
+              "configuration/demo-mode"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/data-flow",
+              "architecture/storage"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/requirements",
+              "deployment/resource-requirements",
+              "deployment/security"
+            ]
+          }
+        ]
+      },
+      {
+        "dropdown": "API Reference",
+        "icon": "rectangle-terminal",
+        "description": "REST API endpoints",
+        "groups": [
+          {
+            "group": "Bots",
+            "pages": [
+              "api-reference/bots/list",
+              "api-reference/bots/add",
+              "api-reference/bots/update",
+              "api-reference/bots/delete",
+              "api-reference/bots/validate",
+              "api-reference/bots/health"
+            ]
+          },
+          {
+            "group": "Chats",
+            "pages": [
+              "api-reference/chats/list",
+              "api-reference/chats/refresh",
+              "api-reference/chats/delete"
+            ]
+          },
+          {
+            "group": "Messages",
+            "pages": [
+              "api-reference/messages/list",
+              "api-reference/messages/search",
+              "api-reference/messages/send",
+              "api-reference/messages/pin",
+              "api-reference/messages/unpin",
+              "api-reference/messages/delete"
+            ]
+          },
+          {
+            "group": "Users",
+            "pages": [
+              "api-reference/users/list",
+              "api-reference/users/ban",
+              "api-reference/users/unban"
+            ]
+          },
+          {
+            "group": "Admins",
+            "pages": [
+              "api-reference/admins/list",
+              "api-reference/admins/promote",
+              "api-reference/admins/demote",
+              "api-reference/admins/title"
+            ]
+          },
+          {
+            "group": "Tags",
+            "pages": [
+              "api-reference/tags/list",
+              "api-reference/tags/user-tags",
+              "api-reference/tags/add",
+              "api-reference/tags/remove"
+            ]
+          },
+          {
+            "group": "Routes",
+            "pages": [
+              "api-reference/routes/list",
+              "api-reference/routes/add",
+              "api-reference/routes/update",
+              "api-reference/routes/delete"
+            ]
+          },
+          {
+            "group": "Analytics & Audit",
+            "pages": [
+              "api-reference/analytics/stats",
+              "api-reference/audit-log/list"
+            ]
+          },
+          {
+            "group": "Long Polling & Proxy",
+            "pages": [
+              "api-reference/long-polling/poll",
+              "api-reference/telegram-proxy/proxy"
+            ]
+          }
+        ]
+      }
+    ]
   },
-  "anchors": [
-    {
-      "name": "API Reference",
-      "icon": "rectangle-terminal",
-      "url": "/api-reference"
-    },
-    {
-      "name": "GitHub",
-      "icon": "github",
-      "url": "https://github.com/skrashevich/botmux"
+  "footer": {
+    "socials": {
+      "github": "https://github.com/skrashevich/botmux"
     }
-  ],
-  "navigation": [
-    {
-      "group": "Getting Started",
-      "pages": [
-        "introduction",
-        "quickstart",
-        "installation",
-        "docker"
-      ]
-    },
-    {
-      "group": "Core Concepts",
-      "pages": [
-        "concepts/how-it-works",
-        "concepts/multi-bot",
-        "concepts/bot-setup"
-      ]
-    },
-    {
-      "group": "Features",
-      "pages": [
-        "features/reverse-proxy",
-        "features/long-polling",
-        "features/api-proxy",
-        "features/message-monitoring",
-        "features/analytics",
-        "features/admin-actions",
-        "features/user-tags",
-        "features/audit-log",
-        "features/media-support",
-        "features/i18n"
-      ]
-    },
-    {
-      "group": "Routing",
-      "pages": [
-        "routing/inter-bot-routing",
-        "routing/llm-routing",
-        "routing/source-nat"
-      ]
-    },
-    {
-      "group": "Bridges",
-      "pages": [
-        "bridges/overview",
-        "bridges/slack",
-        "bridges/webhook"
-      ]
-    },
-    {
-      "group": "Authentication",
-      "pages": [
-        "auth/overview",
-        "auth/users-and-roles",
-        "auth/api-keys"
-      ]
-    },
-    {
-      "group": "Configuration",
-      "pages": [
-        "configuration/cli-flags",
-        "configuration/environment-variables",
-        "configuration/custom-telegram-api",
-        "configuration/demo-mode"
-      ]
-    },
-    {
-      "group": "Architecture",
-      "pages": [
-        "architecture/overview",
-        "architecture/data-flow",
-        "architecture/storage"
-      ]
-    },
-    {
-      "group": "Deployment",
-      "pages": [
-        "deployment/requirements",
-        "deployment/resource-requirements",
-        "deployment/security"
-      ]
-    },
-    {
-      "group": "Bots API",
-      "pages": [
-        "api-reference/bots/list",
-        "api-reference/bots/add",
-        "api-reference/bots/update",
-        "api-reference/bots/delete",
-        "api-reference/bots/validate",
-        "api-reference/bots/health"
-      ]
-    },
-    {
-      "group": "Chats API",
-      "pages": [
-        "api-reference/chats/list",
-        "api-reference/chats/refresh",
-        "api-reference/chats/delete"
-      ]
-    },
-    {
-      "group": "Messages API",
-      "pages": [
-        "api-reference/messages/list",
-        "api-reference/messages/search",
-        "api-reference/messages/send",
-        "api-reference/messages/pin",
-        "api-reference/messages/unpin",
-        "api-reference/messages/delete"
-      ]
-    },
-    {
-      "group": "Users API",
-      "pages": [
-        "api-reference/users/list",
-        "api-reference/users/ban",
-        "api-reference/users/unban"
-      ]
-    },
-    {
-      "group": "Admins API",
-      "pages": [
-        "api-reference/admins/list",
-        "api-reference/admins/promote",
-        "api-reference/admins/demote",
-        "api-reference/admins/title"
-      ]
-    },
-    {
-      "group": "Tags API",
-      "pages": [
-        "api-reference/tags/list",
-        "api-reference/tags/user-tags",
-        "api-reference/tags/add",
-        "api-reference/tags/remove"
-      ]
-    },
-    {
-      "group": "Routes API",
-      "pages": [
-        "api-reference/routes/list",
-        "api-reference/routes/add",
-        "api-reference/routes/update",
-        "api-reference/routes/delete"
-      ]
-    },
-    {
-      "group": "Other API",
-      "pages": [
-        "api-reference/analytics/stats",
-        "api-reference/audit-log/list",
-        "api-reference/long-polling/poll",
-        "api-reference/telegram-proxy/proxy"
-      ]
-    }
-  ],
-  "footerSocials": {
-    "github": "https://github.com/skrashevich/botmux"
   },
-  "backgroundImage": "/background.png",
   "api": {
     "baseUrl": "http://localhost:8080",
     "auth": {
@@ -206,11 +215,5 @@
       "name": "Authorization"
     }
   },
-  "openapi": "openapi.yaml",
-  "tabs": [
-    {
-      "name": "API Reference",
-      "url": "api-reference"
-    }
-  ]
+  "openapi": "openapi.yaml"
 }
