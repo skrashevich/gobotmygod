@@ -1,0 +1,24 @@
+name: Feature Request
+description: Suggest a new feature, improvement, or idea
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea for BotMux? Anything goes — a rough sketch, a detailed spec, or just a "wouldn't it be cool if..."
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What's on your mind?
+      description: Describe your idea, problem, use case — in any form you like.
+      placeholder: |
+        Could be a feature request, a UX improvement, an integration idea, a performance concern, or anything else.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, links, examples, mockups — anything that helps illustrate the idea.

@@ -5,6 +5,7 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/skrashevich/botmux/test.yml?label=tests&logo=github)](https://github.com/skrashevich/botmux/actions/workflows/test.yml)
 [![Docker](https://img.shields.io/github/actions/workflow/status/skrashevich/botmux/docker.yml?label=docker&logo=docker)](https://github.com/skrashevich/botmux/actions/workflows/docker.yml)
 [![Docs](https://img.shields.io/badge/docs-mintlify-blue?logo=readthedocs&logoColor=white)](https://botmux.mintlify.app/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 > **[Documentation](https://botmux.mintlify.app/)** — full setup guide, API reference, and architecture overview.
 
@@ -693,4 +694,4 @@ Botmux is a lightweight single-binary application with minimal resource needs.
 
 ## License
 
-MIT
+Apache License 2.0 — see [LICENSE](LICENSE) for details.
