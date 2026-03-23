@@ -1,5 +1,13 @@
 # botmux
 
+[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)](https://pkg.go.dev/github.com/skrashevich/botmux)
+[![Release](https://img.shields.io/github/v/release/skrashevich/botmux?color=blue)](https://github.com/skrashevich/botmux/releases/latest)
+[![Build](https://img.shields.io/github/actions/workflow/status/skrashevich/botmux/test.yml?label=tests&logo=github)](https://github.com/skrashevich/botmux/actions/workflows/test.yml)
+[![Docker](https://img.shields.io/github/actions/workflow/status/skrashevich/botmux/docker.yml?label=docker&logo=docker)](https://github.com/skrashevich/botmux/actions/workflows/docker.yml)
+[![Docs](https://img.shields.io/badge/docs-mintlify-blue?logo=readthedocs&logoColor=white)](https://botmux.mintlify.app/)
+
+> **[Documentation](https://botmux.mintlify.app/)** — full setup guide, API reference, and architecture overview.
+
 Web-based command center for managing Telegram groups and channels via Bot API, with built-in reverse proxy for legacy webhook bots.
 
 Give it a bot token — it discovers which chats the bot is in, whether it has admin privileges, and provides a full-featured web dashboard for monitoring, analytics, and administration. Manage multiple bots from a single instance.
