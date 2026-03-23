@@ -126,6 +126,9 @@ func (s *Server) BuildMux() *http.ServeMux {
 	mux.HandleFunc("/api/auth/api-keys/delete", s.adminOnly(s.handleDeleteAPIKey))
 	mux.HandleFunc("/api/auth/api-keys/toggle", s.adminOnly(s.handleToggleAPIKey))
 
+	// i18n — no auth (served from embedded FS)
+	mux.HandleFunc("/i18n/", s.handleI18n)
+
 	// SPA — no auth (SPA handles it client-side)
 	mux.HandleFunc("/", s.handleIndex)
 
@@ -220,6 +223,19 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(data)
+}
+
+func (s *Server) handleI18n(w http.ResponseWriter, r *http.Request) {
+	// Serve i18n JSON files from embedded templates/i18n/
+	name := path.Base(r.URL.Path)
+	data, err := templateFS.ReadFile("templates/i18n/" + name)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
 	w.Write(data)
 }
 
