@@ -1,0 +1,41 @@
+---
+title: "Быстрый старт"
+description: "Запустите BotMux менее чем за 5 минут"
+---
+
+## 1. Получите токен бота
+
+Создайте бота через [@BotFather](https://t.me/BotFather) и скопируйте токен.
+
+<Tip>
+Отключите [режим конфиденциальности](https://core.telegram.org/bots/features#privacy-mode), если хотите, чтобы бот видел все сообщения в группе: BotFather → `/setprivacy` → Disable.
+</Tip>
+
+## 2. Запустите BotMux
+
+<CodeGroup>
+```bash Binary
+go install github.com/skrashevich/botmux@latest
+botmux -token "YOUR_TOKEN"
+```
+
+```bash Docker
+TELEGRAM_BOT_TOKEN="YOUR_TOKEN" docker compose up -d
+```
+</CodeGroup>
+
+## 3. Откройте панель управления
+
+Перейдите по адресу [http://localhost:8080](http://localhost:8080). Войдите с логином `admin` / `admin` (вам будет предложено сменить пароль).
+
+## 4. Добавьте бота в чат
+
+Добавьте вашего бота в Telegram-группу или канал и назначьте его администратором. Чат автоматически появится в боковой панели BotMux.
+
+## Дальнейшие шаги
+
+- [Установка](/installation) — подробные инструкции по сборке и установке
+- [Docker](/docker) — настройка Docker и Docker Compose
+- [Настройка бота](/concepts/bot-setup) — необходимые разрешения бота
+- [Обратный прокси](/features/reverse-proxy) — проксирование обновлений на устаревшие бэкенды
+- [Long Polling](/features/long-polling) — pull-интеграция

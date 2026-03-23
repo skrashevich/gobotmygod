@@ -1,0 +1,35 @@
+---
+title: "Мост вебхуков"
+description: "Универсальный HTTP-вебхук для связи с любым протоколом"
+---
+
+Универсальный мост вебхуков позволяет любой внешней системе отправлять и получать сообщения через Telegram-бота.
+
+## Входящие сообщения
+
+Отправьте сообщения в BotMux:
+
+```
+POST /bridge/{id}/incoming
+Content-Type: application/json
+
+{
+  "chat_id": "external-channel-id",
+  "user_id": "external-user-id",
+  "username": "John Doe",
+  "text": "Hello from external system",
+  "message_id": "msg-123"
+}
+```
+
+## Исходящие сообщения
+
+Когда бот отправляет ответ, BotMux пересылает его на настроенный **Callback URL** через HTTP POST.
+
+## Настройка
+
+1. Выберите бота → **Bridges** → **Add Bridge**
+2. Установите **Protocol** в `webhook`
+3. Укажите **Callback URL** для исходящих сообщений
+4. Включите и сохраните
+5. Используйте ID моста в URL для входящих сообщений: `/bridge/{id}/incoming`

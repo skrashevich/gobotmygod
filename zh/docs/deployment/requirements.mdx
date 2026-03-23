@@ -1,0 +1,20 @@
+---
+title: "系统要求"
+description: "运行 BotMux 的系统要求"
+---
+
+## 软件
+
+- **Go 1.21+**（用于从源码构建）
+- 一个 **Telegram 机器人令牌**（通过 [@BotFather](https://t.me/BotFather) 创建）
+
+无其他依赖。BotMux 是单一二进制文件，不需要外部服务。
+
+## 网络
+
+| 端口 | 协议 | 用途 |
+|------|----------|---------|
+| 8080 | HTTP | Web UI 和 REST API |
+| — | HTTPS（出站） | `api.telegram.org`（每个机器人轮询） |
+| — | HTTP/HTTPS（出站） | 后端 URL（启用代理模式时） |
+| — | HTTP/HTTPS（出站） | LLM API 端点（启用 LLM 路由时） |

@@ -1,0 +1,35 @@
+---
+title: "用户标签"
+description: "聊天成员的自定义分类系统"
+---
+
+标签提供了一种灵活的方式来分类和标记聊天成员。
+
+## 功能
+
+- 为用户分配任意标签（VIP、Moderator、Spammer、Trusted 等）
+- **颜色编码**，便于视觉区分
+- 每个用户支持**多个标签**
+- **按聊天独立** — 同一用户在不同聊天中可以有不同的标签
+
+## API
+
+| 方法 | 端点 | 说明 |
+|--------|----------|-------------|
+| GET | `/api/tags?chat_id=` | 获取聊天的所有标签 |
+| GET | `/api/tags/user?chat_id=&user_id=` | 获取用户的标签 |
+| POST | `/api/tags/add` | 添加标签（JSON 请求体） |
+| POST | `/api/tags/remove?id=` | 按 ID 移除标签 |
+
+### 添加标签请求体
+
+```json
+{
+  "bot_id": 1,
+  "chat_id": -1001234567890,
+  "user_id": 123456789,
+  "username": "johndoe",
+  "tag": "VIP",
+  "color": "#4CAF50"
+}
+```

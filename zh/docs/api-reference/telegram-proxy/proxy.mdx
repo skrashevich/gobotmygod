@@ -1,0 +1,30 @@
+---
+title: "Telegram API 代理"
+description: "透明代理至 api.telegram.org 并捕获消息"
+---
+
+Telegram API 代理位于 `/tgapi/bot{TOKEN}/{method}`，透明转发所有请求至 `api.telegram.org`。
+
+## 用法
+
+将后端中的 Telegram API 基础 URL 替换为：
+
+```
+# Before
+https://api.telegram.org/bot{TOKEN}/{method}
+
+# After
+http://localhost:8080/tgapi/bot{TOKEN}/{method}
+```
+
+## 身份验证
+
+无需额外身份验证——URL 中的机器人令牌即为授权凭证（与 Telegram API 相同）。
+
+## 消息捕获
+
+对于发送类方法，代理会从 Telegram 响应中提取已发送的消息并保存到数据库。
+
+## 长轮询拦截
+
+当设置了 `long_poll_enabled` 时，`getUpdates` 请求会被拦截并从 BotMux 内部的 UpdateQueue 返回数据，而不是转发到 Telegram。

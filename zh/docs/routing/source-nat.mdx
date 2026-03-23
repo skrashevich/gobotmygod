@@ -1,0 +1,27 @@
+---
+title: "Source-NAT"
+description: "路由消息的双向回程路径"
+---
+
+Source-NAT（源网络地址转换）实现跨机器人的双向对话。当消息从 Bot A 路由到 Bot B 时，通过 Bot B 对该消息的任何回复都会自动通过 Bot A 发送回原始聊天。
+
+## 工作原理
+
+1. 用户在 Chat X 中发送消息 → Bot A
+2. 路由规则匹配 → 消息通过 Bot B 转发到 Chat Y
+3. BotMux 保存映射：`(source_bot, source_chat, source_msg) ↔ (target_bot, target_chat, target_msg)`
+4. Chat Y 中的用户回复转发的消息
+5. BotMux 检查 `route_mappings` → 找到原始来源
+6. 回复通过 Bot A 发送回 Chat X
+
+## 双向追踪
+
+每个回复都会创建新的映射条目，实现持续的跨机器人对话而不丢失上下文。
+
+## 循环保护
+
+来自机器人（非用户）的消息不会被反向路由，防止无限循环。
+
+## 存储
+
+路由映射存储在 `route_mappings` SQLite 表中，LLM 生成的路由使用 `RouteID=0`。

@@ -1,0 +1,48 @@
+---
+title: "Как это работает"
+description: "Архитектура BotMux и поток обработки обновлений"
+---
+
+BotMux берёт на себя long polling для каждого управляемого бота. Только один клиент может опрашивать токен бота одновременно (ограничение Telegram).
+
+## Поток обновлений
+
+```
+Telegram ──getUpdates──> BotMux (polling loop per bot)
+                            │
+                            ├── Management: trackChat() / saveMessage() → SQLite
+                            ├── Proxy (push): POST update → Backend URL
+                            │                    └── webhook reply → Telegram API
+                            ├── Long Poll: enqueue → UpdateQueue (ring buffer)
+                            │                  Backend ──getUpdates──> /tgapi/ → dequeue
+                            ├── Routing: match rules → send via Target Bot → Telegram
+                            │                └── save mapping → route_mappings (SQLite)
+                            └── Reverse Route: check mappings → reply via Source Bot
+                                                                   (Source-NAT return)
+```
+
+## Режимы интеграции
+
+### Боты с опросом
+
+Если ваш бот сейчас использует `getUpdates`, у вас два варианта:
+
+1. **Режим Long Polling** (рекомендуется, без изменений кода) — включите "Long Poll" в настройках бота, затем направьте базовый URL API вашего бэкенда на BotMux. Ваш бот продолжает вызывать `getUpdates` как раньше, но получает обновления от BotMux вместо Telegram.
+
+2. **Режим Push** — переключите бэкенд на приём вебхук-подобных HTTP POST-запросов. BotMux будет опрашивать Telegram и пересылать обновления на URL вашего бэкенда.
+
+### Боты с вебхуками
+
+Если ваш бот уже использует вебхуки — BotMux переключит его на опрос и будет проксировать обновления обратно на вебхук-эндпоинт. На стороне бэкенда изменения не нужны.
+
+## Перехват исходящих сообщений
+
+`getUpdates` в Telegram возвращает только входящие сообщения. Чтобы перехватывать сообщения, отправленные ботом, направьте бэкенд на прокси API BotMux (`/tgapi/`) вместо `api.telegram.org`. Прокси прозрачно пересылает запросы и сохраняет исходящие сообщения в базу данных.
+
+```
+# До (напрямую)
+https://api.telegram.org/bot{TOKEN}/sendMessage
+
+# После (через прокси BotMux)
+http://localhost:8080/tgapi/bot{TOKEN}/sendMessage
+```

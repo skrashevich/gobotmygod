@@ -1,0 +1,39 @@
+---
+title: "协议桥接"
+description: "将外部消息协议桥接到 Telegram 机器人"
+---
+
+BotMux 将外部消息协议（Slack、webhooks）桥接到 Telegram 机器人。外部消息被转换为 Telegram Update 格式并注入到机器人的处理管道中。
+
+## 工作原理
+
+```
+External Protocol              BotMux                         Telegram
+    │                              │                               │
+    │  incoming message            │                               │
+    ├─────────────────────────────►│  translate to Telegram Update  │
+    │                              │  inject into processUpdate()   │
+    │                              ├──────────────────────────────►│
+    │                              │                               │  bot processes
+    │                              │◄──────────────────────────────┤  bot replies
+    │  outgoing message            │                               │
+    │◄─────────────────────────────┤  send via protocol API        │
+```
+
+## 核心特性
+
+- 所有现有功能自动生效：路由规则、LLM 路由、Source-NAT、消息追踪
+- **双向通信** — 机器人发出的消息会发送回源协议
+- 维护聊天和消息映射，用于线程和回复上下文
+- 合成聊天/用户 ID 避免与真实 Telegram ID 冲突
+
+## 支持的协议
+
+| 协议 | 类型 | 说明 |
+|----------|------|-------------|
+| [Slack](/bridges/slack) | 原生 | 完整的 Slack Events API 和 Web API 集成 |
+| [Webhook](/bridges/webhook) | 通用 | 适用于任何协议的 HTTP webhook |
+
+## 管理
+
+桥接通过 Web UI 按机器人管理（仅管理员）。

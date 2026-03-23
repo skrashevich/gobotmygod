@@ -1,0 +1,29 @@
+---
+title: "Флаги командной строки"
+description: "Флаги командной строки для настройки BotMux"
+---
+
+| Флаг | По умолчанию | Описание |
+|------|--------------|----------|
+| `-token` | `""` | Токен Telegram-бота |
+| `-addr` | `:8080` | Адрес прослушивания HTTP-сервера |
+| `-db` | `botdata.db` | Путь к файлу базы данных SQLite |
+| `-webhook` | `""` | URL вебхука для получения обновлений |
+| `-tg-api` | `""` | Пользовательский базовый URL Telegram API |
+| `-demo` | `false` | Включить демо-режим |
+
+## Примеры
+
+```bash
+# Базовый запуск
+./botmux -token "TOKEN"
+
+# Пользовательский порт и база данных
+./botmux -token "TOKEN" -addr :9090 -db /data/bots.db
+
+# Режим вебхуков
+./botmux -token "TOKEN" -webhook "https://myserver.com/tghook"
+
+# Пользовательский Telegram API
+./botmux -token "TOKEN" -tg-api "http://localhost:8081"
+```

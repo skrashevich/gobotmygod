@@ -1,0 +1,29 @@
+---
+title: "CLI 参数"
+description: "用于配置 BotMux 的命令行参数"
+---
+
+| 参数 | 默认值 | 说明 |
+|------|---------|-------------|
+| `-token` | `""` | Telegram 机器人令牌 |
+| `-addr` | `:8080` | HTTP 服务器监听地址 |
+| `-db` | `botdata.db` | SQLite 数据库文件路径 |
+| `-webhook` | `""` | 设置用于接收更新的 webhook URL |
+| `-tg-api` | `""` | 自定义 Telegram API 基础 URL |
+| `-demo` | `false` | 启用演示模式 |
+
+## 示例
+
+```bash
+# Basic
+./botmux -token "TOKEN"
+
+# Custom port and database
+./botmux -token "TOKEN" -addr :9090 -db /data/bots.db
+
+# Webhook mode
+./botmux -token "TOKEN" -webhook "https://myserver.com/tghook"
+
+# Custom Telegram API
+./botmux -token "TOKEN" -tg-api "http://localhost:8081"
+```

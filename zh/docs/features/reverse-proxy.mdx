@@ -1,0 +1,30 @@
+---
+title: "反向代理"
+description: "将 Telegram 更新转发到传统 webhook 后端"
+---
+
+BotMux 可以轮询 Telegram 获取更新，并将其作为 webhook POST 请求转发到传统机器人后端（推送模式）。
+
+## 设置
+
+1. 在 Web UI 中添加或编辑机器人
+2. 启用 **Proxy** 模式
+3. 将 **Backend URL** 设置为 webhook 端点（例如 `https://legacy-bot.example.com/webhook`）
+4. 可选设置 **Secret Token**（作为 `X-Telegram-Bot-Api-Secret-Token` 头发送）
+5. 保存
+
+BotMux 将轮询 Telegram 并将每个更新作为 POST 请求转发到后端 URL。
+
+## Webhook 响应
+
+后端可以返回 [webhook 风格的回复](https://core.telegram.org/bots/api#making-requests-when-getting-updates)——带有 `method` 字段的 JSON——BotMux 会将其代理到 Telegram API。
+
+## 健康监控
+
+- 每 60 秒自动健康检查
+- 状态可在仪表盘中查看
+- 机器人详情视图中有手动 **CHECK WEBHOOK** 按钮
+
+## 双模式
+
+反向代理和管理模式可以同时为同一个机器人启用。更新既会转发到后端，也会在数据库中跟踪。

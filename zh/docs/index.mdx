@@ -1,0 +1,48 @@
+---
+title: "简介"
+description: "BotMux — 基于 Web 的 Telegram 机器人管理控制中心"
+---
+
+# BotMux
+
+基于 Web 的 Telegram 群组和频道管理控制中心，通过 Bot API 进行管理，内置反向代理支持传统 webhook 机器人。
+
+提供一个机器人令牌——它会自动发现机器人所在的聊天、是否拥有管理员权限，并提供功能完善的 Web 仪表盘，用于监控、分析和管理。支持在单个实例中管理多个机器人。
+
+## 核心功能
+
+- **多机器人管理** — 在单个实例中运行多个机器人，支持按机器人独立配置
+- **反向代理** — 轮询 Telegram 并将更新以 webhook POST 请求转发到传统后端
+- **长轮询** — 兼容 Telegram 的 `getUpdates` 端点，适用于拉取式集成
+- **API 代理** — 透明代理至 `api.telegram.org`，捕获机器人发出的消息
+- **消息监控** — 实时采集，支持全文搜索和回复功能
+- **机器人间路由** — 在机器人之间路由消息，支持 Source-NAT 回程路径
+- **LLM 路由** — 通过任意 OpenAI 兼容 API 实现 AI 智能路由
+- **协议桥接** — 将 Slack、webhook 及其他协议桥接到 Telegram
+- **数据分析** — 消息统计、每小时活跃度、贡献排行
+- **管理操作** — 发送、置顶、删除消息；封禁/解封用户；管理管理员
+- **身份认证** — 基于会话的认证，支持角色、API 密钥和机器人访问控制
+- **国际化** — 支持英语和俄语界面
+
+## 工作原理
+
+BotMux 接管其管理的每个机器人的长轮询。同一时间只有一个客户端可以轮询一个机器人令牌（Telegram 限制），因此：
+
+- 如果你的机器人当前使用**轮询**（`getUpdates`）——有两个选项：
+  1. **长轮询模式**（推荐，零代码修改）——在机器人设置中启用"Long Poll"，然后将后端的 API 基础 URL 指向 BotMux（`http://botmux:8080/tgapi/`）。你的机器人照常调用 `getUpdates`，但从 BotMux 而非 Telegram 获取更新。
+  2. **推送模式** — 将后端切换为接受 webhook 风格的 HTTP POST 请求。BotMux 会轮询 Telegram 并将更新转发到你的后端 URL。
+- 如果你的机器人已经使用 **webhooks** — BotMux 会将其切换为轮询，并将更新代理回 webhook 端点。无需任何更改。
+
+## 架构
+
+单个 Go 二进制文件，除 SQLite（纯 Go 驱动）外无外部依赖。Web UI 在编译时嵌入。
+
+```
+Telegram ──getUpdates──> BotMux (polling loop per bot)
+                            │
+                            ├── Management: tracks chats/messages in DB
+                            ├── Proxy (push): POST update → Backend URL
+                            ├── Long Poll: buffer in UpdateQueue → clients poll
+                            ├── Routing: match rules → send via Target Bot
+                            └── Bridges: translate external protocols → Telegram
+```

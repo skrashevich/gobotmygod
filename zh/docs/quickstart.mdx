@@ -1,0 +1,41 @@
+---
+title: "快速开始"
+description: "5 分钟内运行 BotMux"
+---
+
+## 1. 获取机器人令牌
+
+通过 [@BotFather](https://t.me/BotFather) 创建机器人并复制令牌。
+
+<Tip>
+如果你希望机器人能看到所有群组消息，请禁用[隐私模式](https://core.telegram.org/bots/features#privacy-mode)：BotFather → `/setprivacy` → Disable。
+</Tip>
+
+## 2. 运行 BotMux
+
+<CodeGroup>
+```bash Binary
+go install github.com/skrashevich/botmux@latest
+botmux -token "YOUR_TOKEN"
+```
+
+```bash Docker
+TELEGRAM_BOT_TOKEN="YOUR_TOKEN" docker compose up -d
+```
+</CodeGroup>
+
+## 3. 打开仪表盘
+
+访问 [http://localhost:8080](http://localhost:8080)。使用 `admin` / `admin` 登录（首次登录需修改密码）。
+
+## 4. 将机器人添加到聊天
+
+将机器人添加到 Telegram 群组或频道，并将其设为管理员。该聊天会自动出现在 BotMux 侧边栏中。
+
+## 后续步骤
+
+- [安装](/installation) — 详细的构建和安装说明
+- [Docker](/docker) — Docker 和 Docker Compose 设置
+- [机器人设置](/concepts/bot-setup) — 必需的机器人权限
+- [反向代理](/features/reverse-proxy) — 将更新代理到传统后端
+- [长轮询](/features/long-polling) — 拉取式集成

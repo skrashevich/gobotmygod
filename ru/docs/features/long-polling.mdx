@@ -1,0 +1,55 @@
+---
+title: "Long Polling"
+description: "Telegram-совместимый эндпоинт getUpdates для pull-интеграций"
+---
+
+Long polling предоставляет pull-альтернативу push-прокси. Внешние боты/бэкенды могут вызывать `getUpdates` через BotMux вместо Telegram — изменения кода не нужны, достаточно сменить базовый URL API.
+
+## Настройка
+
+1. Включите переключатель **Long Poll** в настройках бота
+2. В вашем бэкенде измените базовый URL Telegram API:
+
+```
+# До (напрямую к Telegram)
+https://api.telegram.org/bot{TOKEN}/getUpdates
+
+# После (через BotMux)
+http://localhost:8080/tgapi/bot{TOKEN}/getUpdates
+```
+
+Это всё — другие изменения кода не требуются.
+
+## Как это работает
+
+```
+Telegram ──getUpdates──> BotMux (polls Telegram)
+                            │
+                            ├── saves to UpdateQueue (ring buffer, 1000 updates)
+                            ├── Management: tracks chats/messages in DB
+                            │
+Backend ──getUpdates──> /tgapi/ (long poll) ──> returns from UpdateQueue
+Backend ──sendMessage──> /tgapi/ (proxy) ──> Telegram API
+```
+
+## Параметры
+
+Формат ответа идентичен Telegram: `{"ok": true, "result": [...]}`.
+
+| Параметр | Описание |
+|----------|----------|
+| `offset` | Идентификатор первого возвращаемого обновления |
+| `limit` | Максимальное количество обновлений (макс. 100) |
+| `timeout` | Таймаут long polling в секундах (макс. 60) |
+
+## Возможности
+
+- **Совместимость с Telegram** — тот же формат запросов/ответов, что и у Telegram API
+- **Несколько клиентов** могут опрашивать одного бота одновременно
+- **Работает наряду с push-прокси** — оба режима могут быть активны для одного бота
+- **Кольцевой буфер в памяти** — 1000 обновлений на бота с уведомлением ожидающих
+- **Аутентифицированный API** также доступен: `GET /api/updates/poll?bot_id=X` (Bearer или сессия)
+
+<Tip>
+Если ваш бэкенд также отправляет сообщения, направьте их на `/tgapi/`, чтобы перехватывать исходящие сообщения в BotMux.
+</Tip>

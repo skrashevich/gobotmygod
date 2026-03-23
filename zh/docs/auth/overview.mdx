@@ -1,0 +1,41 @@
+---
+title: "身份认证"
+description: "基于会话的身份认证，支持角色和 API 密钥"
+---
+
+BotMux 提供双重认证方式：基于 Cookie 的会话和 Bearer API 密钥。
+
+## 认证方式
+
+### 会话 Cookie
+
+- 30 天过期
+- HttpOnly, SameSite=Strict
+- 通过 `/api/auth/login` 登录时创建
+
+### API 密钥
+
+- `Authorization` 头中的 Bearer 令牌（`Authorization: Bearer bmx_...`）
+- 密钥绑定到用户并继承其角色/权限
+- 在数据库中使用 SHA-256 哈希存储
+
+## 认证流程
+
+1. `authMiddleware` 首先检查 Bearer 令牌
+2. 回退到会话 Cookie
+3. 两者都无效时返回 401 响应
+
+## 免认证端点
+
+| 端点 | 原因 |
+|----------|--------|
+| `/` | SPA 处理客户端认证 |
+| `/api/health` | 健康检查 |
+| `/tgapi/*` | 后端 API 代理（令牌即认证） |
+
+## 默认管理员
+
+首次运行时会创建默认管理员账户：
+- 用户名：`admin`
+- 密码：`admin`
+- 设置了 `must_change_password` 标志——用户必须在首次登录时修改密码

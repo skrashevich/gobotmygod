@@ -1,0 +1,69 @@
+---
+title: "Мост Slack"
+description: "Нативная интеграция со Slack через Events API и Web API"
+---
+
+BotMux предоставляет нативную поддержку моста Slack с полной интеграцией Events API и Web API.
+
+## Настройка
+
+### 1. Создайте приложение Slack
+
+Перейдите на [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From scratch**.
+
+### 2. Настройте области доступа токена бота
+
+Перейдите в **OAuth & Permissions** → **Scopes** → **Bot Token Scopes**:
+
+| Область | Назначение |
+|---------|------------|
+| `chat:write` | Отправка сообщений в каналы |
+| `users:read` | Определение отображаемых имён пользователей |
+| `channels:history` | Получение сообщений из публичных каналов |
+| `groups:history` | Получение сообщений из приватных каналов |
+| `im:history` | Получение личных сообщений |
+| `mpim:history` | Получение групповых личных сообщений |
+
+### 3. Установите приложение в рабочую область
+
+Нажмите **Install to Workspace** и авторизуйте. Скопируйте **Bot User OAuth Token** (`xoxb-...`).
+
+### 4. Получите Signing Secret
+
+Перейдите в **Basic Information** → **App Credentials** → скопируйте **Signing Secret**.
+
+### 5. Создайте мост в BotMux
+
+1. Выберите бота → **Bridges** → **Add Bridge**
+2. Установите **Protocol** в `Slack`
+3. Укажите **Config**:
+
+```json
+{
+  "bot_token": "xoxb-your-bot-token",
+  "signing_secret": "your-signing-secret"
+}
+```
+
+4. Включите и сохраните
+
+### 6. Настройте Slack Events API
+
+1. В настройках приложения Slack → **Event Subscriptions** → Enable Events
+2. Укажите **Request URL**: `https://your-botmux-host/bridge/{id}/incoming`
+3. Подпишитесь на события бота: `message.channels`, `message.groups`, `message.im`, `message.mpim`
+4. Сохраните
+
+<Warning>
+Требуется HTTPS — Slack не принимает HTTP-эндпоинты.
+</Warning>
+
+### 7. Пригласите бота
+
+```
+/invite @YourBotName
+```
+
+## Безопасность
+
+Запросы верифицируются с помощью подписи HMAC-SHA256 (заголовок `X-Slack-Signature`) с защитой от повторных атак в течение 5 минут.

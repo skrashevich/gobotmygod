@@ -1,0 +1,48 @@
+---
+title: "API 代理"
+description: "透明的 Telegram API 代理，捕获机器人发出的消息"
+---
+
+BotMux 在 `/tgapi/` 提供 Telegram API 代理，透明转发请求到 `api.telegram.org` 并捕获发出的消息。
+
+## 为什么使用 API 代理？
+
+Telegram 的 `getUpdates` 只返回收到的消息——机器人自身发送的消息不包含在内。API 代理通过拦截发送方法并将发出的消息保存到数据库来解决这个问题。
+
+## 设置
+
+更改后端的 API 基础 URL：
+
+```
+# Before (direct)
+https://api.telegram.org/bot{TOKEN}/sendMessage
+
+# After (via BotMux proxy)
+http://localhost:8080/tgapi/bot{TOKEN}/sendMessage
+```
+
+代理将所有请求转发到 Telegram 并原样返回响应。
+
+## 捕获的方法
+
+| 方法 | 说明 |
+|--------|-------------|
+| `sendMessage` | 文本消息 |
+| `sendPhoto` | 图片 |
+| `sendAudio` | 音频文件 |
+| `sendDocument` | 文档 |
+| `sendVideo` | 视频 |
+| `sendAnimation` | GIF/动画 |
+| `sendVoice` | 语音消息 |
+| `sendVideoNote` | 视频笔记 |
+| `sendSticker` | 贴纸 |
+| `sendLocation` | 位置 |
+| `sendVenue` | 地点 |
+| `sendContact` | 联系人 |
+| `sendPoll` | 投票 |
+| `sendDice` | 骰子 |
+| `forwardMessage` | 转发消息 |
+| `copyMessage` | 复制消息 |
+| `editMessageText` | 编辑消息 |
+
+当启用代理模式时，**API 代理 URL** 会显示在机器人详情视图中（点击复制）。

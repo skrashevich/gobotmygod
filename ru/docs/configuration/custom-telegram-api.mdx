@@ -1,0 +1,24 @@
+---
+title: "Пользовательский Telegram API"
+description: "Использование собственного сервера Telegram Bot API"
+---
+
+BotMux поддерживает подключение к пользовательскому серверу Telegram Bot API (например, [tdlib/telegram-bot-api](https://github.com/tdlib/telegram-bot-api)).
+
+## Настройка
+
+```bash
+# Через флаг
+./botmux -token "TOKEN" -tg-api "http://localhost:8081"
+
+# Через переменную окружения
+TELEGRAM_API_URL="http://localhost:8081" ./botmux
+```
+
+## На что влияет
+
+Все вызовы Telegram API направляются через пользовательский URL:
+- Опрос бота (`getUpdates`)
+- Методы Bot API (отправка, блокировка, закрепление и т.д.)
+- Прокси API (`/tgapi/` пересылает на пользовательский URL вместо `api.telegram.org`)
+- Загрузка медиафайлов

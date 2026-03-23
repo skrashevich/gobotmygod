@@ -1,0 +1,38 @@
+---
+title: "架构"
+description: "BotMux 系统架构和代码组织"
+---
+
+BotMux 是一个单体 Go 应用程序，编译为单个二进制文件并嵌入 SPA。
+
+## 源文件
+
+| 文件 | 说明 |
+|------|-------------|
+| `main.go` | 入口点、参数解析、机器人注册 |
+| `bot.go` | Telegram Bot API 封装 |
+| `proxy.go` | ProxyManager：轮询、转发、健康检查 |
+| `server.go` | HTTP 服务器、REST API 端点 |
+| `store.go` | SQLite 存储层 |
+| `bridge.go` | BridgeManager，用于多协议桥接 |
+| `slack.go` | 原生 Slack 协议桥接 |
+| `auth.go` | 身份认证和授权 |
+| `llm.go` | 基于 LLM 的消息路由 |
+| `demo.go` | 演示模式数据填充 |
+| `templates/index.html` | SPA（原生 JS，编译时嵌入） |
+
+## 依赖
+
+| 包 | 用途 |
+|---------|---------|
+| `github.com/OvyFlash/telegram-bot-api` | Telegram Bot API 客户端 |
+| `modernc.org/sqlite` | 纯 Go SQLite 驱动（无需 CGO） |
+| `github.com/skrashevich/go-webp` | WebP→PNG 贴纸转换 |
+| `golang.org/x/crypto/bcrypt` | 密码哈希 |
+
+## 关键设计决策
+
+- **CLI 与 Web 机器人无区别** — 所有机器人功能完全相同
+- **单一二进制文件** — Web UI 通过 `go:embed` 嵌入
+- **无需 CGO** — 纯 Go 依赖，便于交叉编译
+- **SQLite WAL 模式** — 简单可靠的存储方案

@@ -1,0 +1,50 @@
+---
+title: "Поток данных"
+description: "Как обновления проходят через BotMux"
+---
+
+```
+Telegram ──getUpdates──> ProxyManager (polling loop per bot)
+                            │
+                            ├── Management: trackChat() / saveMessage() ──> SQLite
+                            ├── Proxy (push): POST update ──> Backend URL
+                            │                    │
+                            │                    └── webhook reply ──> Telegram API
+                            │
+                            ├── Long Poll: enqueue ──> UpdateQueue (ring buffer)
+                            │                              │
+                            │            Backend ──getUpdates──> /tgapi/ ──> dequeue
+                            │
+                            ├── Routing: match rules ──> send via Target Bot ──> Telegram
+                            │                │
+                            │                └── save mapping ──> route_mappings (SQLite)
+                            │
+                            └── Reverse Route: check mappings ──> reply via Source Bot
+                                                                       (Source-NAT return)
+
+Backend ──sendMessage──> /tgapi/ (API proxy) ──> Telegram API
+                            │
+                            └── capture response ──> saveMessage() ──> SQLite
+
+Browser ──HTTP──> Server ──API──> Bot ──Bot API──> Telegram
+                    │
+                    └──queries──> SQLite (read)
+```
+
+## ProxyManager
+
+Каждый бот запускает независимую горутину `pollLoop`. Двойной режим для каждого бота:
+- **Режим прокси**: пересылает необработанные обновления на URL бэкенда
+- **Режим управления**: обрабатывает обновления для отслеживания чатов/сообщений
+
+Оба режима могут быть активны одновременно.
+
+## UpdateQueue
+
+Кольцевой буфер в памяти (1000 обновлений на бота) с паттерном уведомления ожидающих. Несколько потребителей могут опрашивать одновременно.
+
+## Разрешение ботов
+
+API-эндпоинты разрешают ботов через цепочку:
+1. Проверка карты зарегистрированных ботов
+2. Проверка управляемых ботов ProxyManager

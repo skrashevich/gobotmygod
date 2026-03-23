@@ -1,0 +1,30 @@
+---
+title: "安全性"
+description: "生产部署的安全注意事项"
+---
+
+## 身份认证
+
+- 首次运行时创建默认管理员账户（`admin`/`admin`），**必须修改密码**
+- 密码使用 bcrypt 哈希
+- API 密钥使用 SHA-256 哈希
+
+## 生产环境建议
+
+- 在服务器前放置**带 HTTPS 的反向代理**（nginx、caddy 等）
+- 保护 `botdata.db` 文件——其中包含所有采集的消息
+- 使用环境变量传递机器人令牌——避免 shell 历史记录暴露
+- 限制对 BotMux 端口的网络访问
+
+## API 安全
+
+- 所有 API 端点（除健康检查、SPA 和 `/tgapi/`）都需要认证
+- `/tgapi/` 使用机器人令牌作为授权（与 Telegram API 相同）
+- 会话 Cookie：HttpOnly、SameSite=Strict、30 天过期
+- API 密钥：Authorization 头中的 Bearer 令牌
+
+## Slack 桥接安全
+
+- 对所有传入事件进行 HMAC-SHA256 签名验证
+- 5 分钟重放攻击保护
+- 务必配置 `signing_secret`

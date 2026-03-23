@@ -1,0 +1,37 @@
+---
+title: "存储"
+description: "SQLite 数据库架构和存储模型"
+---
+
+BotMux 使用 SQLite WAL 模式。数据库在首次运行时自动创建，并自动进行架构迁移。
+
+## 数据表
+
+| 表 | 说明 |
+|-------|-------------|
+| `bots` | 机器人配置（令牌、模式、后端 URL、状态、健康状况） |
+| `chats` | 追踪的聊天/频道（复合主键：`bot_id` + `chat_id`） |
+| `messages` | 所有观察到的消息（复合主键：`chat_id` + `message_id`） |
+| `known_users` | 在聊天中出现过的用户 |
+| `admin_log` | Web UI 操作的审计日志 |
+| `user_tags` | 按聊天自定义的用户分类 |
+| `routes` | 机器人间路由规则 |
+| `route_mappings` | 用于双向路由的 Source-NAT 追踪 |
+| `auth_users` | 用户账户 |
+| `auth_sessions` | 登录会话 |
+| `user_bots` | 用户↔机器人访问（多对多关联表） |
+| `api_keys` | API 密钥存储 |
+| `llm_config` | LLM 路由配置 |
+| `bridges` | 协议桥接配置 |
+| `bridge_chat_mappings` | 外部↔Telegram 聊天映射 |
+| `bridge_msg_mappings` | 外部↔Telegram 消息映射 |
+
+## 数据库文件
+
+默认：工作目录中的 `botdata.db`。可通过 `-db` 参数覆盖。
+
+演示模式使用独立的 `demo.db`。
+
+## 迁移
+
+架构迁移在启动时自动运行。无需手动迁移步骤。

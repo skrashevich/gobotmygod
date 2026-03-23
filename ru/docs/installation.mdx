@@ -1,0 +1,52 @@
+---
+title: "Установка"
+description: "Сборка и установка BotMux из исходного кода"
+---
+
+## Требования
+
+- Go 1.21+
+- Токен Telegram-бота (создайте через [@BotFather](https://t.me/BotFather))
+
+## Сборка из исходного кода
+
+```bash
+git clone https://github.com/skrashevich/botmux.git
+cd botmux
+go build -o botmux .
+```
+
+CGO не требуется — все зависимости написаны на чистом Go.
+
+## Установка через `go install`
+
+```bash
+go install github.com/skrashevich/botmux@latest
+```
+
+## Запуск
+
+```bash
+# С флагом токена
+./botmux -token "123456:ABC-DEF..."
+
+# С переменной окружения
+export TELEGRAM_BOT_TOKEN="123456:ABC-DEF..."
+./botmux
+
+# Пользовательский адрес
+./botmux -token "TOKEN" -addr :9090
+```
+
+Токен необязателен — если он не указан, BotMux запускается без CLI-бота и использует только ботов из базы данных.
+
+## Флаги командной строки
+
+| Флаг | По умолчанию | Описание |
+|------|--------------|----------|
+| `-token` | `""` | Токен Telegram-бота (или переменная окружения `TELEGRAM_BOT_TOKEN`) |
+| `-addr` | `:8080` | Адрес прослушивания HTTP-сервера |
+| `-db` | `botdata.db` | Путь к файлу базы данных SQLite |
+| `-webhook` | `""` | URL вебхука для получения обновлений |
+| `-tg-api` | `""` | Пользовательский базовый URL Telegram API (или переменная окружения `TELEGRAM_API_URL`) |
+| `-demo` | `false` | Включить демо-режим (или переменная окружения `DEMO_MODE=true`) |
