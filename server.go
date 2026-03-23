@@ -714,43 +714,46 @@ func longPollResponse(updates []QueuedUpdate) map[string]interface{} {
 // No auth required — the bot token in the URL is the authorization (same as Telegram API).
 func (s *Server) handleLongPollGetUpdates(w http.ResponseWriter, r *http.Request, botCfg *BotConfig) {
 	// Parse params from query string (GET) or form body (POST) — Telegram supports both
-	var offsetStr, limitStr, timeoutStr string
+	var offset int64
+	var limit, timeout int
 	if r.Method == http.MethodPost {
 		// Try JSON body first, then form values
 		if r.Header.Get("Content-Type") == "application/json" {
-			var body map[string]interface{}
+			var body struct {
+				Offset  json.Number `json:"offset"`
+				Limit   json.Number `json:"limit"`
+				Timeout json.Number `json:"timeout"`
+			}
 			if json.NewDecoder(r.Body).Decode(&body) == nil {
-				if v, ok := body["offset"]; ok {
-					offsetStr = fmt.Sprintf("%v", v)
+				if body.Offset != "" {
+					offset, _ = body.Offset.Int64()
 				}
-				if v, ok := body["limit"]; ok {
-					limitStr = fmt.Sprintf("%v", v)
+				if body.Limit != "" {
+					v, _ := body.Limit.Int64()
+					limit = int(v)
 				}
-				if v, ok := body["timeout"]; ok {
-					timeoutStr = fmt.Sprintf("%v", v)
+				if body.Timeout != "" {
+					v, _ := body.Timeout.Int64()
+					timeout = int(v)
 				}
 			}
 		} else {
 			r.ParseForm()
-			offsetStr = r.FormValue("offset")
-			limitStr = r.FormValue("limit")
-			timeoutStr = r.FormValue("timeout")
+			offset, _ = strconv.ParseInt(r.FormValue("offset"), 10, 64)
+			limit, _ = strconv.Atoi(r.FormValue("limit"))
+			timeout, _ = strconv.Atoi(r.FormValue("timeout"))
 		}
 	}
 	// Query params take precedence (or fallback for GET)
 	if v := r.URL.Query().Get("offset"); v != "" {
-		offsetStr = v
+		offset, _ = strconv.ParseInt(v, 10, 64)
 	}
 	if v := r.URL.Query().Get("limit"); v != "" {
-		limitStr = v
+		limit, _ = strconv.Atoi(v)
 	}
 	if v := r.URL.Query().Get("timeout"); v != "" {
-		timeoutStr = v
+		timeout, _ = strconv.Atoi(v)
 	}
-
-	offset, _ := strconv.ParseInt(offsetStr, 10, 64)
-	limit, _ := strconv.Atoi(limitStr)
-	timeout, _ := strconv.Atoi(timeoutStr)
 
 	if limit <= 0 || limit > 100 {
 		limit = 100
