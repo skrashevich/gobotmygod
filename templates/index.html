@@ -1486,7 +1486,7 @@ body::before { display: none; }
     <div class="modal-perms" style="margin:14px 0;gap:12px">
       <label class="modal-perm"><input type="checkbox" id="botFormManage" checked onchange="toggleProxyFields()"> Management (track chats, messages, users)</label>
       <label class="modal-perm"><input type="checkbox" id="botFormProxy" onchange="toggleProxyFields()"> Reverse Proxy (forward updates to webhook)</label>
-      <label class="modal-perm"><input type="checkbox" id="botFormLongPoll"> Long Poll (allow external clients to pull updates)</label>
+      <label class="modal-perm"><input type="checkbox" id="botFormLongPoll" onchange="toggleProxyFields()"> Long Poll (allow external clients to pull updates)</label>
     </div>
     <div id="botModeHint" style="font-family:var(--ff-mono);font-size:10px;color:var(--text3);margin:-8px 0 10px 0"></div>
     <div id="proxyFields" style="display:none">
@@ -2275,6 +2275,9 @@ const i18n = {
     bot_mode_hint_both: 'Bot will forward updates to backend AND be available via web UI',
     bot_mode_hint_proxy: 'Bot will only forward updates to backend webhook',
     bot_mode_hint_none: 'Enable at least one mode for the bot to work',
+    bot_mode_hint_longpoll: 'External clients can pull updates via getUpdates — use /tgapi/ as API base URL',
+    bot_mode_hint_manage_longpoll: 'Web UI management + external clients pull updates via getUpdates',
+    bot_mode_hint_proxy_longpoll: 'Updates are pushed to backend webhook (long poll is ignored when proxy is active)',
     bot_added: 'Bot added', bot_updated: 'Bot updated', bot_deleted: 'Bot deleted',
     confirm_delete_bot: 'Delete this bot and all its data?',
     // admin modals
@@ -2455,6 +2458,9 @@ const i18n = {
     bot_mode_hint_both: 'Бот будет пересылать на бэкенд И доступен через веб-интерфейс',
     bot_mode_hint_proxy: 'Бот будет только пересылать обновления на бэкенд webhook',
     bot_mode_hint_none: 'Включите хотя бы один режим для работы бота',
+    bot_mode_hint_longpoll: 'Внешние клиенты получают обновления через getUpdates — укажите /tgapi/ как base URL',
+    bot_mode_hint_manage_longpoll: 'Веб-интерфейс + внешние клиенты получают обновления через getUpdates',
+    bot_mode_hint_proxy_longpoll: 'Обновления пушатся на бэкенд webhook (long poll игнорируется при активном прокси)',
     bot_added: 'Бот добавлен', bot_updated: 'Бот обновлён', bot_deleted: 'Бот удалён',
     confirm_delete_bot: 'Удалить бота и все его данные?',
     // admin modals
@@ -4134,13 +4140,16 @@ function closeBotModal() { document.getElementById('botModal').style.display = '
 function toggleProxyFields() {
   const proxy = document.getElementById('botFormProxy').checked;
   const manage = document.getElementById('botFormManage').checked;
+  const longPoll = document.getElementById('botFormLongPoll').checked;
   document.getElementById('proxyFields').style.display = proxy ? '' : 'none';
   const hint = document.getElementById('botModeHint');
-  if (manage && proxy) hint.textContent = t('bot_mode_hint_both');
+  if (manage && proxy) hint.textContent = t(longPoll ? 'bot_mode_hint_proxy_longpoll' : 'bot_mode_hint_both');
+  else if (manage && longPoll) hint.textContent = t('bot_mode_hint_manage_longpoll');
   else if (manage) hint.textContent = t('bot_mode_hint_manage');
-  else if (proxy) hint.textContent = t('bot_mode_hint_proxy');
+  else if (proxy) hint.textContent = t(longPoll ? 'bot_mode_hint_proxy_longpoll' : 'bot_mode_hint_proxy');
+  else if (longPoll) hint.textContent = t('bot_mode_hint_longpoll');
   else hint.textContent = t('bot_mode_hint_none');
-  hint.style.color = (!manage && !proxy) ? 'var(--magenta)' : 'var(--text3)';
+  hint.style.color = (!manage && !proxy && !longPoll) ? 'var(--magenta)' : 'var(--text3)';
 }
 
 async function validateBotToken() {
