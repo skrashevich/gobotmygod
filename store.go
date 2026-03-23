@@ -157,7 +157,7 @@ type AdminInfo struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	db, err := sql.Open("sqlite", path+"?_journal_mode=WAL")
+	db, err := sql.Open("sqlite", path+"?_journal_mode=WAL&_busy_timeout=5000")
 	if err != nil {
 		return nil, err
 	}
