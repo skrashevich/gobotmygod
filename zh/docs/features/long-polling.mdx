@@ -1,0 +1,55 @@
+---
+title: "长轮询"
+description: "兼容 Telegram 的 getUpdates 端点，适用于拉取式集成"
+---
+
+长轮询提供了推送代理的拉取式替代方案。外部机器人/后端可以通过 BotMux 调用 `getUpdates` 而非 Telegram——无需修改代码，只需更改 API 基础 URL。
+
+## 设置
+
+1. 在机器人设置中启用 **Long Poll** 开关
+2. 在你的后端中更改 Telegram API 基础 URL：
+
+```
+# Before (direct to Telegram)
+https://api.telegram.org/bot{TOKEN}/getUpdates
+
+# After (via BotMux)
+http://localhost:8080/tgapi/bot{TOKEN}/getUpdates
+```
+
+就这样——无需其他代码修改。
+
+## 工作原理
+
+```
+Telegram ──getUpdates──> BotMux (polls Telegram)
+                            │
+                            ├── saves to UpdateQueue (ring buffer, 1000 updates)
+                            ├── Management: tracks chats/messages in DB
+                            │
+Backend ──getUpdates──> /tgapi/ (long poll) ──> returns from UpdateQueue
+Backend ──sendMessage──> /tgapi/ (proxy) ──> Telegram API
+```
+
+## 参数
+
+响应格式与 Telegram 完全一致：`{"ok": true, "result": [...]}`。
+
+| 参数 | 说明 |
+|-----------|-------------|
+| `offset` | 要返回的第一个更新的标识符 |
+| `limit` | 最大更新数量（最多 100） |
+| `timeout` | 长轮询超时时间（秒）（最长 60） |
+
+## 特性
+
+- **兼容 Telegram** — 与 Telegram API 相同的请求/响应格式
+- **多个客户端**可以同时轮询同一个机器人
+- **可与推送代理同时使用** — 两者可以为同一个机器人同时启用
+- **内存环形缓冲区** — 每个机器人 1000 个更新，支持等待者通知
+- **认证 API** 也可用：`GET /api/updates/poll?bot_id=X`（Bearer 或会话）
+
+<Tip>
+如果你的后端也发送消息，将这些请求也指向 `/tgapi/` 以在 BotMux 中捕获发出的消息。
+</Tip>

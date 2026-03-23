@@ -1,0 +1,28 @@
+---
+title: "演示模式"
+description: "用于公开演示的隔离环境"
+---
+
+演示模式创建用于公开演示的隔离环境。
+
+## 启用
+
+```bash
+# Via flag
+./botmux -demo
+
+# Via environment variable
+DEMO_MODE=true ./botmux
+
+# Docker
+docker run -e DEMO_MODE=true -p 8080:8080 botmux
+```
+
+## 行为
+
+- 使用独立的 `demo.db` 数据库
+- 登录：`demo` / `demo`（无需修改密码）
+- 3 个预配置的演示机器人
+- 使用模拟 Telegram API（`telegram-bot-api.exe.xyz`）
+- 会话在 30 分钟不活动后过期
+- `/api/health` 返回 `{"mode": "demo"}`，前端会自动填充凭证

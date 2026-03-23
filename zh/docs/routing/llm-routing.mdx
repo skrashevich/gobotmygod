@@ -1,0 +1,41 @@
+---
+title: "LLM 路由"
+description: "通过任意 OpenAI 兼容 API 实现 AI 智能路由"
+---
+
+BotMux 可以使用 LLM 根据消息内容做出智能路由决策。
+
+## 工作原理
+
+1. 消息到达机器人
+2. 首先检查基于规则的路由
+3. 如果没有规则匹配，LLM 会接收消息文本、发送者信息和所有机器人及其描述的列表
+4. LLM 返回路由决策：`{target_bot_id, target_chat_id, action, reason}`
+
+## 支持的 API
+
+任何 **OpenAI 兼容**端点均可使用：
+- OpenAI
+- Ollama
+- LM Studio
+- 任何兼容的 API
+
+## 配置
+
+通过 Web UI 中的 **LLM Config** 进行配置：
+
+| 字段 | 说明 |
+|-------|-------------|
+| API URL | OpenAI 兼容端点 URL |
+| API Key | 认证密钥 |
+| Model | 模型名称（例如 `gpt-4o`、`llama3`） |
+| System Prompt | 用于路由决策的自定义系统提示词 |
+| Enabled | 开启/关闭切换 |
+
+## 机器人描述
+
+每个机器人可以有一个**描述**来说明其功能。这些描述会发送给 LLM 以帮助其做出更好的路由决策。可通过 Web UI 或 API（`/api/bots/description`）设置描述。
+
+## 反向路由
+
+Source-NAT 回程路径对 LLM 路由的消息自动生效，与基于规则的路由完全相同。

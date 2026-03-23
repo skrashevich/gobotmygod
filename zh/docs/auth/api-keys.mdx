@@ -1,0 +1,34 @@
+---
+title: "API 密钥"
+description: "通过 Bearer 令牌认证实现编程访问"
+---
+
+API 密钥提供无需会话 Cookie 即可编程访问 BotMux 的方式。
+
+## 格式
+
+密钥使用 `bmx_` 前缀：`bmx_a1b2c3d4e5f6...`
+
+## 使用方法
+
+```bash
+curl -H "Authorization: Bearer bmx_your_key_here" \
+  http://localhost:8080/api/bots
+```
+
+## 管理
+
+仅管理员可通过 Web UI 或 API 管理：
+
+| 方法 | 端点 | 说明 |
+|--------|----------|-------------|
+| GET | `/api/auth/api-keys` | 列出所有 API 密钥 |
+| POST | `/api/auth/api-keys/create` | 创建新密钥 |
+| POST | `/api/auth/api-keys/disable` | 禁用密钥 |
+| POST | `/api/auth/api-keys/delete` | 删除密钥 |
+
+## 安全性
+
+- 密钥绑定到用户并继承其角色和权限
+- 在数据库中以 SHA-256 哈希存储
+- 实际密钥仅在创建时显示一次

@@ -1,0 +1,48 @@
+---
+title: "工作原理"
+description: "了解 BotMux 的核心架构和更新流程"
+---
+
+BotMux 接管其管理的每个机器人的长轮询。同一时间只有一个客户端可以轮询一个机器人令牌（Telegram 限制）。
+
+## 更新流程
+
+```
+Telegram ──getUpdates──> BotMux (polling loop per bot)
+                            │
+                            ├── Management: trackChat() / saveMessage() → SQLite
+                            ├── Proxy (push): POST update → Backend URL
+                            │                    └── webhook reply → Telegram API
+                            ├── Long Poll: enqueue → UpdateQueue (ring buffer)
+                            │                  Backend ──getUpdates──> /tgapi/ → dequeue
+                            ├── Routing: match rules → send via Target Bot → Telegram
+                            │                └── save mapping → route_mappings (SQLite)
+                            └── Reverse Route: check mappings → reply via Source Bot
+                                                                   (Source-NAT return)
+```
+
+## 集成模式
+
+### 轮询机器人
+
+如果你的机器人当前使用 `getUpdates`，有两个选项：
+
+1. **长轮询模式**（推荐，零代码修改）——在机器人设置中启用"Long Poll"，然后将后端的 API 基础 URL 指向 BotMux。你的机器人照常调用 `getUpdates`，但从 BotMux 而非 Telegram 获取更新。
+
+2. **推送模式** — 将后端切换为接受 webhook 风格的 HTTP POST 请求。BotMux 会轮询 Telegram 并将更新转发到你的后端 URL。
+
+### Webhook 机器人
+
+如果你的机器人已经使用 webhooks——BotMux 会将其切换为轮询，并将更新代理回 webhook 端点。后端无需任何更改。
+
+## 捕获发出的消息
+
+Telegram 的 `getUpdates` 只返回收到的消息。要捕获机器人发出的消息，请将后端指向 BotMux 的 API 代理（`/tgapi/`）而非 `api.telegram.org`。代理会透明转发请求，并将发出的消息保存到数据库。
+
+```
+# Before (direct)
+https://api.telegram.org/bot{TOKEN}/sendMessage
+
+# After (via BotMux proxy)
+http://localhost:8080/tgapi/bot{TOKEN}/sendMessage
+```

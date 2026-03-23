@@ -1,0 +1,37 @@
+---
+title: "Docker"
+description: "Запуск BotMux с помощью Docker и Docker Compose"
+---
+
+## Docker Compose (рекомендуется)
+
+```bash
+TELEGRAM_BOT_TOKEN="YOUR_TOKEN" docker compose up -d
+```
+
+## Docker Run
+
+```bash
+docker run -d -p 8080:8080 -v botmux-data:/data \
+  -e TELEGRAM_BOT_TOKEN="YOUR_TOKEN" ghcr.io/skrashevich/botmux:main
+```
+
+Данные хранятся в томе `/data` внутри контейнера.
+
+## Локальная сборка
+
+```bash
+# Стандартная сборка
+docker build -t botmux .
+
+# Мультиархитектурная сборка
+docker buildx build --platform linux/amd64,linux/arm64 -t botmux .
+```
+
+## Переменные окружения
+
+| Переменная | Описание |
+|------------|----------|
+| `TELEGRAM_BOT_TOKEN` | Токен бота (альтернатива флагу `-token`) |
+| `TELEGRAM_API_URL` | Пользовательский URL Telegram API |
+| `DEMO_MODE` | Установите `true` для демо-режима |

@@ -1,0 +1,30 @@
+---
+title: "Прокси Telegram API"
+description: "Прозрачный прокси к api.telegram.org с перехватом сообщений"
+---
+
+Прокси Telegram API по адресу `/tgapi/bot{TOKEN}/{method}` прозрачно перенаправляет все запросы на `api.telegram.org`.
+
+## Использование
+
+Замените базовый URL Telegram API в вашем бэкенде:
+
+```
+# До
+https://api.telegram.org/bot{TOKEN}/{method}
+
+# После
+http://localhost:8080/tgapi/bot{TOKEN}/{method}
+```
+
+## Аутентификация
+
+Дополнительная аутентификация не требуется — токен бота в URL является авторизацией (аналогично Telegram API).
+
+## Перехват сообщений
+
+Для методов отправки прокси извлекает отправленное сообщение из ответа Telegram и сохраняет его в базу данных.
+
+## Перехват Long Polling
+
+Когда включён параметр `long_poll_enabled`, запросы `getUpdates` перехватываются и обслуживаются из внутренней очереди UpdateQueue BotMux вместо пересылки в Telegram.

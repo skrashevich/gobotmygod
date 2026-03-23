@@ -1,0 +1,20 @@
+---
+title: "环境变量"
+description: "通过环境变量配置 BotMux"
+---
+
+| 变量 | 等效参数 | 说明 |
+|----------|----------------|-------------|
+| `TELEGRAM_BOT_TOKEN` | `-token` | Telegram 机器人令牌 |
+| `TELEGRAM_API_URL` | `-tg-api` | 自定义 Telegram API 基础 URL |
+| `DEMO_MODE` | `-demo` | 设置为 `true` 启用演示模式 |
+
+## 使用方法
+
+```bash
+export TELEGRAM_BOT_TOKEN="123456:ABC-DEF..."
+export TELEGRAM_API_URL="http://localhost:8081"
+./botmux
+```
+
+环境变量和 CLI 参数可以组合使用。CLI 参数优先级更高。

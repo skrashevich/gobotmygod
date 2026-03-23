@@ -1,0 +1,37 @@
+---
+title: "Docker"
+description: "使用 Docker 和 Docker Compose 运行 BotMux"
+---
+
+## Docker Compose（推荐）
+
+```bash
+TELEGRAM_BOT_TOKEN="YOUR_TOKEN" docker compose up -d
+```
+
+## Docker Run
+
+```bash
+docker run -d -p 8080:8080 -v botmux-data:/data \
+  -e TELEGRAM_BOT_TOKEN="YOUR_TOKEN" ghcr.io/skrashevich/botmux:main
+```
+
+数据存储在容器内的 `/data` 卷中。
+
+## 本地构建
+
+```bash
+# Standard build
+docker build -t botmux .
+
+# Multi-arch build
+docker buildx build --platform linux/amd64,linux/arm64 -t botmux .
+```
+
+## 环境变量
+
+| 变量 | 说明 |
+|----------|-------------|
+| `TELEGRAM_BOT_TOKEN` | 机器人令牌（替代 `-token` 参数） |
+| `TELEGRAM_API_URL` | 自定义 Telegram API URL |
+| `DEMO_MODE` | 设置为 `true` 启用演示模式 |

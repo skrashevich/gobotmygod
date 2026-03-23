@@ -1,0 +1,69 @@
+---
+title: "Slack 桥接"
+description: "原生 Slack 集成，支持 Events API 和 Web API"
+---
+
+BotMux 提供原生 Slack 桥接支持，完整集成 Events API 和 Web API。
+
+## 设置
+
+### 1. 创建 Slack 应用
+
+前往 [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From scratch**。
+
+### 2. 配置 Bot Token 权限范围
+
+导航至 **OAuth & Permissions** → **Scopes** → **Bot Token Scopes**：
+
+| 权限范围 | 用途 |
+|-------|---------|
+| `chat:write` | 向频道发送消息 |
+| `users:read` | 解析用户显示名称 |
+| `channels:history` | 接收公共频道的消息 |
+| `groups:history` | 接收私有频道的消息 |
+| `im:history` | 接收私信 |
+| `mpim:history` | 接收群组私信 |
+
+### 3. 将应用安装到工作区
+
+点击 **Install to Workspace** 并授权。复制 **Bot User OAuth Token**（`xoxb-...`）。
+
+### 4. 获取签名密钥
+
+前往 **Basic Information** → **App Credentials** → 复制 **Signing Secret**。
+
+### 5. 在 BotMux 中创建桥接
+
+1. 选择机器人 → **Bridges** → **Add Bridge**
+2. 将 **Protocol** 设置为 `Slack`
+3. 设置 **Config**：
+
+```json
+{
+  "bot_token": "xoxb-your-bot-token",
+  "signing_secret": "your-signing-secret"
+}
+```
+
+4. 启用并保存
+
+### 6. 配置 Slack Events API
+
+1. 在 Slack 应用设置中 → **Event Subscriptions** → Enable Events
+2. 设置 **Request URL**：`https://your-botmux-host/bridge/{id}/incoming`
+3. 订阅机器人事件：`message.channels`、`message.groups`、`message.im`、`message.mpim`
+4. 保存
+
+<Warning>
+需要 HTTPS——Slack 不接受 HTTP 端点。
+</Warning>
+
+### 7. 邀请机器人
+
+```
+/invite @YourBotName
+```
+
+## 安全性
+
+请求使用 HMAC-SHA256 签名（`X-Slack-Signature` 头）进行验证，并提供 5 分钟的重放攻击保护。

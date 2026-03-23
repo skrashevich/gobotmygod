@@ -1,0 +1,24 @@
+---
+title: "自定义 Telegram API"
+description: "使用自托管的 Telegram Bot API 服务器"
+---
+
+BotMux 支持指向自定义 Telegram Bot API 服务器（例如 [tdlib/telegram-bot-api](https://github.com/tdlib/telegram-bot-api)）。
+
+## 设置
+
+```bash
+# Via flag
+./botmux -token "TOKEN" -tg-api "http://localhost:8081"
+
+# Via environment variable
+TELEGRAM_API_URL="http://localhost:8081" ./botmux
+```
+
+## 影响范围
+
+所有 Telegram API 调用都通过自定义 URL 路由：
+- 机器人轮询（`getUpdates`）
+- Bot API 方法（send、ban、pin 等）
+- API 代理（`/tgapi/` 转发到自定义 URL 而非 `api.telegram.org`）
+- 媒体文件下载

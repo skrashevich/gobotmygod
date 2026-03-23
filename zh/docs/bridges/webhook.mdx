@@ -1,0 +1,35 @@
+---
+title: "Webhook 桥接"
+description: "适用于任何协议的通用 HTTP webhook 桥接"
+---
+
+通用 webhook 桥接允许任何外部系统通过 Telegram 机器人收发消息。
+
+## 接收消息
+
+向 BotMux 发送消息：
+
+```
+POST /bridge/{id}/incoming
+Content-Type: application/json
+
+{
+  "chat_id": "external-channel-id",
+  "user_id": "external-user-id",
+  "username": "John Doe",
+  "text": "Hello from external system",
+  "message_id": "msg-123"
+}
+```
+
+## 发送消息
+
+当机器人发送回复时，BotMux 会通过 HTTP POST 将消息转发到配置的 **Callback URL**。
+
+## 设置
+
+1. 选择机器人 → **Bridges** → **Add Bridge**
+2. 将 **Protocol** 设置为 `webhook`
+3. 设置用于发送消息的 **Callback URL**
+4. 启用并保存
+5. 使用桥接 ID 构建接收 URL：`/bridge/{id}/incoming`

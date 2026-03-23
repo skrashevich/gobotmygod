@@ -1,0 +1,52 @@
+---
+title: "安装"
+description: "从源码构建和安装 BotMux"
+---
+
+## 前置条件
+
+- Go 1.21+
+- 一个 Telegram 机器人令牌（通过 [@BotFather](https://t.me/BotFather) 创建）
+
+## 从源码构建
+
+```bash
+git clone https://github.com/skrashevich/botmux.git
+cd botmux
+go build -o botmux .
+```
+
+无需 CGO——所有依赖均为纯 Go。
+
+## 通过 `go install` 安装
+
+```bash
+go install github.com/skrashevich/botmux@latest
+```
+
+## 运行
+
+```bash
+# With token flag
+./botmux -token "123456:ABC-DEF..."
+
+# With environment variable
+export TELEGRAM_BOT_TOKEN="123456:ABC-DEF..."
+./botmux
+
+# Custom address
+./botmux -token "TOKEN" -addr :9090
+```
+
+令牌是可选的——如果未提供，BotMux 将在没有 CLI 机器人的情况下启动，仅使用数据库中的机器人。
+
+## 命令行参数
+
+| 参数 | 默认值 | 说明 |
+|------|---------|-------------|
+| `-token` | `""` | Telegram 机器人令牌（或 `TELEGRAM_BOT_TOKEN` 环境变量） |
+| `-addr` | `:8080` | HTTP 服务器监听地址 |
+| `-db` | `botdata.db` | SQLite 数据库文件路径 |
+| `-webhook` | `""` | 设置用于接收更新的 webhook URL |
+| `-tg-api` | `""` | 自定义 Telegram API 基础 URL（或 `TELEGRAM_API_URL` 环境变量） |
+| `-demo` | `false` | 启用演示模式（或 `DEMO_MODE=true` 环境变量） |
