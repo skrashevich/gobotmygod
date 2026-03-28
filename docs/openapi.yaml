@@ -41,7 +41,18 @@ tags:
   - name: Long Polling
     description: Pull-based update delivery (Telegram-compatible)
   - name: Telegram Proxy
-    description: Transparent proxy to api.telegram.org with message capture
+    description: |
+      Transparent proxy to api.telegram.org with message capture and method interception.
+
+      Several Telegram Bot API methods are intercepted by BotMux instead of being forwarded:
+      - `setWebhook` — configures the bot's backend URL in BotMux and enables proxy mode
+      - `deleteWebhook` — clears the backend URL and disables proxy mode
+      - `getWebhookInfo` — returns BotMux's internal webhook state
+      - `getUpdates` — served from BotMux's internal queue when long polling is enabled
+      - `logOut` — returns success without forwarding (prevents token being disabled for 10 minutes)
+      - `close` — returns success without forwarding (prevents bot instance shutdown on Telegram's side)
+
+      A file download endpoint at `/tgapi/file/bot{TOKEN}/{file_path}` is also available as a drop-in replacement for Telegram's file download URL.
 
 components:
   securitySchemes:
@@ -1923,7 +1934,13 @@ paths:
       description: |
         Transparently proxies requests to `api.telegram.org`. No BotMux authentication required — the bot token in the URL is the authorization.
 
-        For `getUpdates`, when `long_poll_enabled` is set on the matching bot, requests are intercepted and served from BotMux's internal `UpdateQueue` instead of forwarding to Telegram.
+        Several methods are intercepted and handled internally by BotMux instead of being forwarded to Telegram:
+        - **`setWebhook`** — Registers the webhook URL as the bot's backend URL in BotMux and enables proxy mode. If the bot token is not yet registered, BotMux auto-registers it via `getMe`. Supports `url` and `drop_pending_updates` parameters.
+        - **`deleteWebhook`** — Clears the backend URL and disables proxy mode for the bot. Supports `drop_pending_updates`.
+        - **`getWebhookInfo`** — Returns BotMux's internal webhook state including the configured backend URL and pending update count.
+        - **`getUpdates`** — When `long_poll_enabled` is set on the matching bot, requests are intercepted and served from BotMux's internal update queue instead of forwarding to Telegram. When the bot is managed by BotMux but long polling is not enabled, returns an empty result to prevent Telegram API conflict errors.
+        - **`logOut`** — Returns `{"ok": true, "result": true}` without forwarding. Forwarding would disable the token for 10 minutes.
+        - **`close`** — Returns `{"ok": true, "result": true}` without forwarding. Forwarding would shut down the bot instance on Telegram's side.
       operationId: telegramProxyGet
       security: []
       parameters:
@@ -1947,6 +1964,7 @@ paths:
               schema:
                 type: object
                 description: Raw Telegram API response
+
     post:
       tags: [Telegram Proxy]
       summary: Telegram API proxy (POST)
@@ -1954,6 +1972,8 @@ paths:
         Transparently proxies POST requests to `api.telegram.org`.
 
         For send methods (`sendMessage`, `sendPhoto`, `sendVideo`, etc.), BotMux parses the Telegram response to extract the sent message and saves it to the database, capturing outgoing messages that would not appear in `getUpdates`.
+
+        The same method interception rules described in the GET endpoint apply here. Methods like `setWebhook`, `deleteWebhook`, `getWebhookInfo`, `getUpdates`, `logOut`, and `close` are handled internally by BotMux rather than forwarded to Telegram.
       operationId: telegramProxyPost
       security: []
       parameters:
@@ -1988,3 +2008,50 @@ paths:
               schema:
                 type: object
                 description: Raw Telegram API response
+
+  /tgapi/file/bot{token}/{file_path}:
+    x-internal: true
+    get:
+      tags: [Telegram Proxy]
+      summary: File download proxy
+      description: |
+        Downloads a file from Telegram and streams it to the client. This endpoint is a drop-in replacement for Telegram's file download URL, allowing you to configure it as your bot library's `base_file_url`.
+
+        WebP files (stickers) are automatically converted to PNG for browser compatibility. Content types are detected from file extensions, with content sniffing as a fallback. Responses include a `Cache-Control: public, max-age=86400` header.
+      operationId: telegramFileProxy
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Telegram bot token
+        - name: file_path
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Telegram file path (as returned by the `getFile` API method)
+      responses:
+        '200':
+          description: File content streamed from Telegram. WebP files are converted to PNG.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: Detected MIME type of the file
+            Cache-Control:
+              schema:
+                type: string
+                example: "public, max-age=86400"
+              description: Caching directive for the file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid path format
+        '502':
+          description: Failed to download file from Telegram
