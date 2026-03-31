@@ -1,6 +1,6 @@
 ---
 title: "Прокси Telegram API"
-description: "Прозрачный прокси к api.telegram.org с перехватом сообщений"
+description: "Прозрачный прокси к api.telegram.org с перехватом сообщений и методов"
 ---
 
 Прокси Telegram API по адресу `/tgapi/bot{TOKEN}/{method}` прозрачно перенаправляет все запросы на `api.telegram.org`.
@@ -48,6 +48,6 @@ http://localhost:8080/tgapi/file/bot{TOKEN}/{file_path}
 | `setWebhook` | Настраивает URL бэкенда бота в BotMux и включает режим прокси. Автоматически регистрирует неизвестных ботов через `getMe`. Поддерживает параметры `url` и `drop_pending_updates`. |
 | `deleteWebhook` | Очищает URL бэкенда и отключает режим прокси. Поддерживает `drop_pending_updates`. |
 | `getWebhookInfo` | Возвращает внутреннее состояние вебхука BotMux (`url`, `pending_update_count`, `has_custom_certificate`, `max_connections`, `ip_address`). |
-| `getUpdates` | Когда включён long polling, обслуживается из внутренней очереди BotMux вместо пересылки в Telegram. |
+| `getUpdates` | Когда включён long polling, обслуживается из внутренней очереди BotMux вместо пересылки в Telegram. Когда бот управляется BotMux, но long polling не включён, возвращает пустой результат для предотвращения конфликтов. |
 | `logOut` | Возвращает `{"ok": true, "result": true}` без пересылки. Предотвращает отключение токена на 10 минут. |
 | `close` | Возвращает `{"ok": true, "result": true}` без пересылки. Предотвращает остановку экземпляра бота на стороне Telegram. |

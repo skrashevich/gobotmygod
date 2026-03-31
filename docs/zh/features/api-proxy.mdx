@@ -70,7 +70,7 @@ http://localhost:8080/tgapi/file/bot{TOKEN}/{file_path}
 | `setWebhook` | 将 webhook URL 注册为 BotMux 中机器人的后端 URL 并启用代理模式。如果机器人令牌尚未注册，BotMux 会通过 `getMe` 自动注册。支持 `url` 和 `drop_pending_updates` 参数。 |
 | `deleteWebhook` | 清除后端 URL 并禁用机器人的代理模式。支持 `drop_pending_updates`。 |
 | `getWebhookInfo` | 返回 BotMux 的内部 webhook 状态，包括配置的后端 URL 和待处理的更新数量。 |
-| `getUpdates` | 当启用长轮询时，从 BotMux 的内部队列返回更新，而不是直接轮询 Telegram。 |
+| `getUpdates` | 当启用长轮询时，从 BotMux 的内部队列返回更新，而不是直接轮询 Telegram。当机器人由 BotMux 管理但未启用长轮询时，返回空结果以防止冲突错误。 |
 | `logOut` | 返回成功而不转发到 Telegram。转发会导致令牌被禁用 10 分钟，破坏 BotMux 的轮询。 |
 | `close` | 返回成功而不转发到 Telegram。转发会关闭 Telegram 端的机器人实例。 |
 

@@ -1,6 +1,6 @@
 ---
 title: "Telegram API Proxy"
-description: "Transparent proxy to api.telegram.org with message capture"
+description: "Transparent proxy to api.telegram.org with message capture and method interception"
 ---
 
 The Telegram API proxy at `/tgapi/bot{TOKEN}/{method}` transparently forwards all requests to `api.telegram.org`.
@@ -48,6 +48,6 @@ Several Telegram Bot API methods are intercepted and handled by BotMux instead o
 | `setWebhook` | Configures the bot's backend URL in BotMux and enables proxy mode. Auto-registers unknown bots via `getMe`. Supports `url` and `drop_pending_updates` parameters. |
 | `deleteWebhook` | Clears the backend URL and disables proxy mode. Supports `drop_pending_updates`. |
 | `getWebhookInfo` | Returns BotMux's internal webhook state (`url`, `pending_update_count`, `has_custom_certificate`, `max_connections`, `ip_address`). |
-| `getUpdates` | When long polling is enabled, served from BotMux's internal queue instead of forwarding to Telegram. |
+| `getUpdates` | When long polling is enabled, served from BotMux's internal queue instead of forwarding to Telegram. When the bot is managed but long polling is not enabled, returns an empty result to prevent conflict errors. |
 | `logOut` | Returns `{"ok": true, "result": true}` without forwarding. Prevents token being disabled for 10 minutes. |
 | `close` | Returns `{"ok": true, "result": true}` without forwarding. Prevents the bot instance from being shut down on Telegram's side. |

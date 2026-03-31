@@ -70,7 +70,7 @@ The following Telegram Bot API methods are intercepted by the proxy and handled 
 | `setWebhook` | Registers the webhook URL as the bot's backend URL in BotMux and enables proxy mode. If the bot token is not yet registered, BotMux auto-registers it via `getMe`. Supports `url` and `drop_pending_updates` parameters. |
 | `deleteWebhook` | Clears the backend URL and disables proxy mode for the bot. Supports `drop_pending_updates`. |
 | `getWebhookInfo` | Returns BotMux's internal webhook state including the configured backend URL and pending update count. |
-| `getUpdates` | When long polling is enabled, returns updates from BotMux's internal queue instead of polling Telegram directly. |
+| `getUpdates` | When long polling is enabled, returns updates from BotMux's internal queue instead of polling Telegram directly. When the bot is managed but long polling is not enabled, returns an empty result to prevent conflict errors. |
 | `logOut` | Returns success without forwarding to Telegram. Forwarding would disable the token for 10 minutes, breaking BotMux's polling. |
 | `close` | Returns success without forwarding to Telegram. Forwarding would shut down the bot instance on Telegram's side. |
 
