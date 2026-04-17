@@ -1,0 +1,20 @@
+---
+title: 'April 17, 2026'
+description: 'File download proxy, zero-config bot migration, and safer API method handling.'
+---
+
+<Update label="2026-04-17" description="Week of April 17" tags={["Features", "Improvements"]}>
+
+## New features
+
+- **File download proxy** — The [API proxy](/docs/en/features/api-proxy) now includes a file download endpoint at `/tgapi/file/bot{TOKEN}/{file_path}`. You can use it as a drop-in `base_file_url` in your bot library. WebP sticker files are automatically converted to PNG for browser compatibility.
+
+- **Zero-config bot migration** — Point your existing bot backend at BotMux's API proxy and call `setWebhook` as usual. BotMux will automatically register the bot, enable proxy mode, and start forwarding updates — no manual setup required. Calling `deleteWebhook` through the proxy reverses the process. See [reverse proxy](/docs/en/features/reverse-proxy) for details.
+
+## Improvements
+
+- **Safer API method handling** — The API proxy now intercepts `logOut` and `close` methods instead of forwarding them to Telegram. This prevents accidental token disabling (10-minute lockout) or bot instance shutdown when these methods are called through the proxy. See [intercepted methods](/docs/en/features/api-proxy#intercepted-methods).
+
+- **Long-poll getUpdates interception** — When long polling is enabled for a bot, calling `getUpdates` through the API proxy now returns updates from BotMux's internal queue instead of polling Telegram directly. This avoids conflicts between the proxy and your bot's polling loop.
+
+</Update>

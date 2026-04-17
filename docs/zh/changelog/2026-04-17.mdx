@@ -1,0 +1,20 @@
+---
+title: '2026年4月17日'
+description: '文件下载代理、零配置机器人迁移和更安全的 API 方法处理。'
+---
+
+<Update label="2026-04-17" description="4月17日当周" tags={["功能", "改进"]}>
+
+## 新功能
+
+- **文件下载代理** — [API 代理](/docs/zh/features/api-proxy)现在包含文件下载端点 `/tgapi/file/bot{TOKEN}/{file_path}`。您可以将其用作机器人库中的 `base_file_url` 替代方案。WebP 贴纸文件会自动转换为 PNG 以兼容浏览器。
+
+- **零配置机器人迁移** — 将现有机器人后端指向 BotMux 的 API 代理，然后像往常一样调用 `setWebhook`。BotMux 将自动注册机器人、启用代理模式并开始转发更新——无需手动设置。通过代理调用 `deleteWebhook` 可以撤销此过程。详情请参阅[反向代理](/docs/zh/features/reverse-proxy)。
+
+## 改进
+
+- **更安全的 API 方法处理** — API 代理现在拦截 `logOut` 和 `close` 方法，而不是将它们转发到 Telegram。这可以防止通过代理调用这些方法时意外禁用令牌（10 分钟锁定）或关闭机器人实例。请参阅[拦截方法](/docs/zh/features/api-proxy#intercepted-methods)。
+
+- **长轮询 getUpdates 拦截** — 当机器人启用长轮询时，通过 API 代理调用 `getUpdates` 现在会从 BotMux 的内部队列返回更新，而不是直接轮询 Telegram。这避免了代理和机器人轮询循环之间的冲突。
+
+</Update>
